@@ -1,0 +1,6 @@
+<launch>
+
+<!-- Load controller settings -->
+<rosparam file="$(find ros_control_boilerplate)/rrbot_control/config/rrbot_controllers.yaml" command="load"/>
+    <node name="roboy_can" pkg="roboy_can" type="roboy_can" output="screen" />
+</launch>
