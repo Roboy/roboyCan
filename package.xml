@@ -44,10 +44,12 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>std_srvs</build_depend>
   <build_depend>rosparam_shortcuts</build_depend>
+  <build_depend>message_generation</build_depend>
   <run_depend>kacanopen</run_depend>
   <run_depend>std_msgs</run_depend>
   <run_depend>std_srvs</run_depend>
   <run_depend>rosparam_shortcuts</run_depend>
+  <run_depend>message_runtime</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

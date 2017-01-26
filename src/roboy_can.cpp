@@ -1,4 +1,5 @@
 #include "roboy_can/roboy_can.hpp"
+#define MAXONMOTORTICK_IN_RAD 4318.828535741
 
 canRoboy::canRoboy() {
   ros::NodeHandle nnh(roboyCanNH_, "Roboy_Can_Interface");
@@ -11,6 +12,28 @@ void canRoboy::initialise(std::string busname, std::string baudrate) {
   }
   std::cout << "Configuring Nodes" << std::endl;
   configureNodes();
+  setEposController_ = roboyCanNH_.advertiseService(
+      "setEPOSControllers", &canRoboy::set_controllers, this);
+}
+
+bool canRoboy::set_controllers(roboy_can::setEPOSControllers::Request &req,
+                               roboy_can::setEPOSControllers::Response &res) {
+  std::vector<std::string> joint_names;
+  joint_names = getJointNames();
+  for (size_t i = 0; i < req.request.size(); i++) {
+    switch (req.request.at(i)) {
+    case 1:
+      enable_profile_position_mode(joint_names.at(i));
+      break;
+    case -3:
+      enable_current_mode(joint_names.at(i));
+      break;
+
+    default:
+      ROS_INFO("The control mode: %d is unknown for motor %s",
+               req.request.at(i), joint_names.at(i).c_str());
+    }
+  }
 }
 
 /**
@@ -25,10 +48,42 @@ void canRoboy::configureNodes(void) {
   master_.core.nmt.reset_all_nodes();
   for (std::string joint : joint_names) {
     std::cout << "Motor: " << joint << std::endl;
+#define PROFILEPOSIITONMODE 1
+    controlMode_[getCanAddress(joint)] = PROFILEPOSIITONMODE;
     setupMotor(joint);
+    PDO_setup(joint);
   }
 }
 
+/**
+ * [canRoboy::enable_current_mode description]
+ * @method canRoboy::enable_current_mode
+ */
+void canRoboy::enable_current_mode(std::string jointName) {
+  unsigned int canID = getCanAddress(jointName);
+
+  std::cout << "Activate current mode " << std::endl;
+#define CURRENTMODE -3
+  controlMode_[canID] = CURRENTMODE;
+  deviceVector_.at(canID).set_entry(
+      "modes_of_operation",
+      deviceVector_.at(canID).get_constant("current_mode"));
+}
+
+/**
+ * [canRoboy::enable_profile_position_mode Enables the profile position mode -
+ * only used if it was changed beforehand away from it]
+ * @method canRoboy::enable_profile_position_mode
+ */
+void canRoboy::enable_profile_position_mode(std::string jointName) {
+  unsigned int canID = getCanAddress(jointName);
+
+  std::cout << "Activate profile_position_mode mode " << std::endl;
+
+  deviceVector_.at(canID).set_entry(
+      "modes_of_operation",
+      deviceVector_.at(canID).get_constant("profile_position_mode"));
+}
 /**
  * [moveMotor description]
  * @method moveMotor
@@ -37,8 +92,17 @@ void canRoboy::configureNodes(void) {
  */
 void canRoboy::moveMotor(std::string jointName, int setpoint) {
   unsigned int canID = getCanAddress_cached(jointName);
-  std::cout << "can moves ID: "<< canID <<" to: "<< (int32_t)setpoint << std::endl;
-  deviceVector_.at(canID).execute("set_target_position", (int32_t)setpoint);
+
+  switch (controlMode_[canID]) {
+  case -3:
+    deviceVector_.at(canID).set_entry("Current Mode Setting Value",
+                                      (int16_t)70);
+    break;
+  case 1:
+    deviceVector_.at(canID).execute(
+        "set_target_position", (int32_t)(setpoint * MAXONMOTORTICK_IN_RAD));
+    break;
+  }
 }
 
 /**
@@ -75,8 +139,8 @@ std::vector<unsigned int> canRoboy::getMotorIDs(void) { return motor_ids_; }
 std::vector<std::string> canRoboy::getJointNames(void) {
   std::vector<std::string> joint_names;
   std::size_t error = 0;
-  error += !rosparam_shortcuts::get("hardware_interface", roboyCanNH_, "hardware_interface/joints",
-                                    joint_names);
+  error += !rosparam_shortcuts::get("hardware_interface", roboyCanNH_,
+                                    "hardware_interface/joints", joint_names);
   rosparam_shortcuts::shutdownIfError("hardware_interface", error);
 
   for (std::string joint : joint_names) {
@@ -104,7 +168,8 @@ unsigned int canRoboy::getCanAddress_cached(std::string jointName) {
 unsigned int canRoboy::getCanAddress(std::string jointName) {
   int canAddress = 0;
   std::ostringstream stringStream;
-  stringStream << "hardware_interface/MaxonConfigs/" << jointName << "/CANAddress";
+  stringStream << "hardware_interface/MaxonConfigs/" << jointName
+               << "/CANAddress";
   rosparam_shortcuts::get("hardware_interface", roboyCanNH_, stringStream.str(),
                           canAddress);
   return canAddress;
@@ -145,10 +210,16 @@ std::vector<double> canRoboy::readPosition(void) {
   int32_t data_temp;
   for (std::string motor : jointNames) {
     data_temp = deviceVector_.at(getCanAddress(motor))
-                       .get_entry("Position Actual Value");
-        std::cout << data_temp << std::endl;
-
+                    .get_entry("Position Actual Value");
     temp.push_back((double)data_temp);
+    std::cout << "Motor current: "
+              << deviceVector_.at(getCanAddress(motor))
+                     .get_entry("Current Demand Value")
+              << std::endl;
+    std::cout << "Modes of operation: "
+              << deviceVector_.at(getCanAddress(motor))
+                     .get_entry("Modes of Operation Display")
+              << std::endl;
   }
   return temp;
 }
@@ -161,17 +232,16 @@ std::vector<double> canRoboy::readPosition(void) {
 void canRoboy::setupMotor(std::string JointName) {
   unsigned int JointCanAddress = 0;
   JointCanAddress = getCanAddress(JointName);
-std::cout << "my joint can address is "<<JointCanAddress << std::endl;
+  std::cout << "my joint can address is " << JointCanAddress << std::endl;
   deviceVector_.at(JointCanAddress).start();
   std::cout << "RoboyCAN Started node." << std::endl;
   deviceVector_.at(JointCanAddress)
-      .load_dictionary_from_eds("/home/roboy/cm_workspace/src/can/kacanopen/"
+      .load_dictionary_from_eds("/home/roboy/cm_workspace/src/kacanopen/"
                                 "eds_library/MaxonMotor/epos2_347717.eds");
   std::cout << "RoboyCAN - : Loaded Dictionary" << std::endl;
 
   deviceVector_.at(JointCanAddress).set_entry("CAN Bitrate", (uint16_t)0);
   std::cout << "RoboyCAN - : Set bitrate to 0" << std::endl;
-
 
   int temp32 = 0;
   std::ostringstream stringStream;
@@ -182,18 +252,18 @@ std::cout << "my joint can address is "<<JointCanAddress << std::endl;
   deviceVector_.at(JointCanAddress)
       .set_entry("Sensor Configuration/Pulse Number Incremental Encoder 1",
                  (uint32_t)temp32);
-  std::cout << "RoboyCAN -Set Encoder ticks per rotation" << temp32 << std::endl;
+  std::cout << "RoboyCAN -Set Encoder ticks per rotation" << temp32
+            << std::endl;
 
+  stringStream.str(std::string());
+  stringStream << "hardware_interface/MaxonConfigs/" << JointName
+               << "/Sensor_Configuration/Position_Sensor_Type";
+  rosparam_shortcuts::get("hardware_interface", roboyCanNH_, stringStream.str(),
+                          temp32);
 
- stringStream.str(std::string());
-  stringStream << "hardware_interface/MaxonConfigs/" << JointName << "/Sensor_Configuration/Position_Sensor_Type";
-  rosparam_shortcuts::get("hardware_interface", roboyCanNH_, stringStream.str(),temp32);
-
-  deviceVector_.at(JointCanAddress).set_entry(
-      "Sensor Configuration/Position Sensor Type",
-      (uint16_t) temp32);
+  deviceVector_.at(JointCanAddress)
+      .set_entry("Sensor Configuration/Position Sensor Type", (uint16_t)temp32);
   std::cout << "RoboyCAN - : Set Sensor type" << temp32 << std::endl;
-
 
   // deviceVector_.at(JointCanAddress).set_entry("Miscellaneous
   // Configuration",
@@ -205,19 +275,21 @@ std::cout << "my joint can address is "<<JointCanAddress << std::endl;
       .set_entry("modes_of_operation",
                  deviceVector_.at(JointCanAddress)
                      .get_constant("profile_position_mode"));
-  //std::cout << "RoboyCAN - : Set Profile position mode" << temp32 << std::endl;
-
+  // std::cout << "RoboyCAN - : Set Profile position mode" << temp32 <<
+  // std::endl;
 
   stringStream.str(std::string());
-  stringStream << "hardware_interface/MaxonConfigs/" << JointName << "/Max_Following_Error";
+  stringStream << "hardware_interface/MaxonConfigs/" << JointName
+               << "/Max_Following_Error";
   rosparam_shortcuts::get("hardware_interface", roboyCanNH_, stringStream.str(),
                           temp32);
   deviceVector_.at(JointCanAddress)
       .set_entry("Max Following Error", (uint32_t)temp32);
-  std::cout << "RoboyCAN - : Set max following error: "<< temp32 << std::endl;
+  std::cout << "RoboyCAN - : Set max following error: " << temp32 << std::endl;
 
   stringStream.str(std::string());
-  stringStream << "hardware_interface/MaxonConfigs/" << JointName << "/Profile_Velocity";
+  stringStream << "hardware_interface/MaxonConfigs/" << JointName
+               << "/Profile_Velocity";
   rosparam_shortcuts::get("hardware_interface", roboyCanNH_, stringStream.str(),
                           temp32);
   deviceVector_.at(JointCanAddress)
@@ -225,41 +297,99 @@ std::cout << "my joint can address is "<<JointCanAddress << std::endl;
   std::cout << "RoboyCAN - : Set Profile velocity" << temp32 << std::endl;
 
   stringStream.str(std::string());
-  stringStream << "hardware_interface/MaxonConfigs/" << JointName << "/Max_Profile_Velocity";
+  stringStream << "hardware_interface/MaxonConfigs/" << JointName
+               << "/Max_Profile_Velocity";
   rosparam_shortcuts::get("hardware_interface", roboyCanNH_, stringStream.str(),
                           temp32);
   deviceVector_.at(JointCanAddress)
       .set_entry("Max Profile Velocity", (uint32_t)temp32);
-  std::cout << "RoboyCAN - : Set max Profile Velocity"  << temp32 << std::endl;
+  std::cout << "RoboyCAN - : Set max Profile Velocity" << temp32 << std::endl;
 
   stringStream.str(std::string());
-  stringStream << "hardware_interface/MaxonConfigs/" << JointName << "/Profile_Acceleration";
+  stringStream << "hardware_interface/MaxonConfigs/" << JointName
+               << "/Profile_Acceleration";
   rosparam_shortcuts::get("hardware_interface", roboyCanNH_, stringStream.str(),
                           temp32);
   deviceVector_.at(JointCanAddress)
       .set_entry("Profile Acceleration", (uint32_t)temp32);
-  std::cout << "RoboyCAN - : Set max profile acceleration"  << temp32 << std::endl;
+  std::cout << "RoboyCAN - : Set max profile acceleration" << temp32
+            << std::endl;
   stringStream.str(std::string());
-  stringStream << "hardware_interface/MaxonConfigs/" << JointName << "/Profile_Deceleration";
+  stringStream << "hardware_interface/MaxonConfigs/" << JointName
+               << "/Profile_Deceleration";
   rosparam_shortcuts::get("hardware_interface", roboyCanNH_, stringStream.str(),
                           temp32);
   deviceVector_.at(JointCanAddress)
       .set_entry("Profile Deceleration", (uint32_t)temp32);
-  std::cout << "RoboyCAN - : Set profile deceleration"  << temp32 << std::endl;
+  std::cout << "RoboyCAN - : Set profile deceleration" << temp32 << std::endl;
 
   stringStream.str(std::string());
-  stringStream << "hardware_interface/MaxonConfigs/" << JointName << "/Motion_Profile_Type";
+  stringStream << "hardware_interface/MaxonConfigs/" << JointName
+               << "/Motion_Profile_Type";
   rosparam_shortcuts::get("hardware_interface", roboyCanNH_, stringStream.str(),
                           temp32);
   deviceVector_.at(JointCanAddress)
       .set_entry("Motion Profile Type", (int16_t)temp32);
-  std::cout << "RoboyCAN - : Set motion profile type"  << temp32 << std::endl;
+  std::cout << "RoboyCAN - : Set motion profile type" << temp32 << std::endl;
   master_.core.nmt.send_nmt_message(JointCanAddress,
-                                     kaco::NMT::Command::enter_preoperational);
-    master_.core.nmt.send_nmt_message(JointCanAddress, kaco::NMT::Command::start_node);
+                                    kaco::NMT::Command::enter_preoperational);
+  master_.core.nmt.send_nmt_message(JointCanAddress,
+                                    kaco::NMT::Command::start_node);
 
   deviceVector_.at(JointCanAddress).execute("enable_operation");
+}
 
+void canRoboy::PDO_setup(std::string JointName) {
+  /**
+   * Setup PDO MOSI Mapping:
+   * - This only works when the driver is pre-operational.
+   * - Disable the PDO mapping to allow modifiing the mapped objects
+   * - Map the first object to the Target_Position
+   * - Define the number of objects that are mapped together to this one PDO
+   *    The maximum size of a PDO is 64 bit make sure you stay under it.
+   * - Start the node and enable the device
+   * - Add the Kacan 'transmit' (MOSI) PDO1 mapping which is by standard
+   * configured for the control word...
+   * - Add the Kacan 'transmit' (MOSI) PDO2 mapping for the master
+   *
+   */
+  unsigned int JointCanAddress = 0;
+  JointCanAddress = getCanAddress(JointName);
+
+  master_.core.nmt.send_nmt_message(JointCanAddress,
+                                    kaco::NMT::Command::enter_preoperational);
+
+  std::cout << "COB-ID of PDO2"
+            << deviceVector_.at(JointCanAddress)
+                   .get_entry("Receive PDO 2 Parameter/COB-ID used by RxPDO 2")
+            << std::endl;
+
+  deviceVector_.at(JointCanAddress)
+      .set_entry("Receive PDO 2 Mapping/Number of Mapped Application Objects "
+                 "in RxPDO 2",
+                 (uint8_t)0);
+  std::cout << "PDO mapping number of objects to 0" << std::endl;
+  // map to the Target position object
+  deviceVector_.at(JointCanAddress)
+      .set_entry("Receive PDO 2 Mapping/1st Mapped Object in RxPDO 2",
+                 (uint32_t)0x607A0020);
+  std::cout << "PDO mapping number of objects to 0" << std::endl;
+
+  deviceVector_.at(JointCanAddress)
+      .set_entry("Receive PDO 2 Mapping/Number of Mapped Application Objects "
+                 "in RxPDO 2",
+                 (uint8_t)1);
+  master_.core.nmt.send_nmt_message(JointCanAddress,
+                                    kaco::NMT::Command::start_node);
+  deviceVector_.at(JointCanAddress).execute("enable_operation");
+
+  deviceVector_.at(JointCanAddress)
+      .add_transmit_pdo_mapping(0x00000200 + JointCanAddress,
+                                {{"controlword", 0}});
+  deviceVector_.at(JointCanAddress)
+      .add_transmit_pdo_mapping(0x00000300 + JointCanAddress,
+                                {{"Target Position", 0}});
+  deviceVector_.at(JointCanAddress).execute("enable_operation");
 }
 
 // int main(int argc, char **argv) {
