@@ -1,64 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
- <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="roboy">
- 	  <link name="base_link">
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="roboy">
+  <link name="base_link">
   </link>
-<xacro:macro name="muscle" params="prefix ">
-  <link name="${prefix}_muscle">
-  </link>
-   <joint name="joint${prefix}" type="fixed">
-     <parent link="base_link"/>
+  <xacro:macro name="muscle" params="prefix ">
+    <link name="${prefix}_muscle">
+    </link>
+    <joint name="joint${prefix}" type="fixed">
+      <parent link="base_link"/>
       <child link="${prefix}_muscle"/>
       <origin xyz="0 0 0" />
     </joint>
-</xacro:macro>
-<xacro:muscle prefix="1" />
-<xacro:muscle prefix="2" />
-<xacro:muscle prefix="3" />
-<xacro:muscle prefix="4" />
-<xacro:muscle prefix="5" />
-<xacro:muscle prefix="6" />
-<xacro:muscle prefix="7" />
-<xacro:muscle prefix="8" />
-<xacro:muscle prefix="9" />
-<xacro:muscle prefix="10" />
-<xacro:muscle prefix="11" />
-<xacro:muscle prefix="12" />
-<xacro:muscle prefix="13" />
-<xacro:muscle prefix="14" />
-<xacro:muscle prefix="15" />
-<xacro:muscle prefix="16" />
-<xacro:muscle prefix="17" />
-<xacro:muscle prefix="18" />
-<xacro:muscle prefix="19" />
-<xacro:muscle prefix="20" />
-<xacro:muscle prefix="21" />
-<xacro:muscle prefix="22" />
-<xacro:muscle prefix="23" />
-<xacro:muscle prefix="24" />
-<xacro:muscle prefix="25" />
-<xacro:muscle prefix="26" />
-<xacro:muscle prefix="27" />
-<xacro:muscle prefix="28" />
-<xacro:muscle prefix="29" />
-<xacro:muscle prefix="30" />
-<xacro:muscle prefix="31" />
-<xacro:muscle prefix="32" />
-<xacro:muscle prefix="33" />
-<xacro:muscle prefix="34" />
-<xacro:muscle prefix="35" />
-<xacro:muscle prefix="36" />
-<xacro:muscle prefix="37" />
-<xacro:muscle prefix="38" />
-<xacro:muscle prefix="39" />
-<xacro:muscle prefix="40" />
-<xacro:muscle prefix="41" />
-<xacro:muscle prefix="42" />
-<xacro:muscle prefix="43" />
-<xacro:muscle prefix="44" />
-<xacro:muscle prefix="45" />
-<xacro:muscle prefix="46" />
-<xacro:muscle prefix="47" />
-<xacro:muscle prefix="48" />
-<xacro:muscle prefix="49" />
-<xacro:muscle prefix="50" />
+  </xacro:macro>
+  <xacro:muscle prefix="1" />
+  <xacro:muscle prefix="2" />
+  <xacro:muscle prefix="3" />
+  <xacro:muscle prefix="4" />
+  <xacro:muscle prefix="5" />
+  <xacro:muscle prefix="6" />
+  <xacro:muscle prefix="7" />
+  <xacro:muscle prefix="8" />
+  <xacro:muscle prefix="9" />
+  <xacro:muscle prefix="10" />
+  <xacro:muscle prefix="11" />
+  <xacro:muscle prefix="12" />
+  <xacro:muscle prefix="13" />
+  <xacro:muscle prefix="14" />
+  <xacro:muscle prefix="15" />
+  <xacro:muscle prefix="16" />
+  <xacro:muscle prefix="17" />
+  <xacro:muscle prefix="18" />
+  <xacro:muscle prefix="19" />
+  <xacro:muscle prefix="20" />
+  <xacro:muscle prefix="21" />
+  <xacro:muscle prefix="22" />
+  <xacro:muscle prefix="23" />
+  <xacro:muscle prefix="24" />
+  <xacro:muscle prefix="25" />
+  <xacro:muscle prefix="26" />
+  <xacro:muscle prefix="27" />
+  <xacro:muscle prefix="28" />
+  <xacro:muscle prefix="29" />
+  <xacro:muscle prefix="30" />
+  <xacro:muscle prefix="31" />
+  <xacro:muscle prefix="32" />
+  <xacro:muscle prefix="33" />
+  <xacro:muscle prefix="34" />
+  <xacro:muscle prefix="35" />
+  <xacro:muscle prefix="36" />
+  <xacro:muscle prefix="37" />
+  <xacro:muscle prefix="38" />
+  <xacro:muscle prefix="39" />
+  <xacro:muscle prefix="40" />
+  <xacro:muscle prefix="41" />
+  <xacro:muscle prefix="42" />
+  <xacro:muscle prefix="43" />
+  <xacro:muscle prefix="44" />
+  <xacro:muscle prefix="45" />
+  <xacro:muscle prefix="46" />
+  <xacro:muscle prefix="47" />
+  <xacro:muscle prefix="48" />
+  <xacro:muscle prefix="49" />
+  <xacro:muscle prefix="50" />
 </robot>
