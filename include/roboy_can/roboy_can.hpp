@@ -6,34 +6,35 @@
 #include "canopen_error.h"
 #include "logger.h"
 #include "master.h"
-#include "roboy_can/setEPOSControllers.h"
-#include "ros/ros.h"
+
 #include <map>
-#include <rosparam_shortcuts/rosparam_shortcuts.h>
 #include <vector>
+
+enum class RoboyCanStatus {
+  OK,
+  CONNECTION_FAILED,
+  DEVICE_NOT_FOUND,
+  WRONG_DRIVER,
+  OTHER_ERROR
+};
 
 class canRoboy {
 public:
-  canRoboy();
-  void initialise(std::string busname = "slcan0", std::string baudrate = "1M");
+  RoboyMotorCommandStatus moveMotor(EPOSCommand);
 
-  void configureNodes(void);
-  void enable_current_mode(std::string);
-  void enable_profile_position_mode(std::string);
+  RoboyMotorCommandStatus stopMotors(std::string);
 
-  void moveMotor(std::string jointName, int setpoint);
+  RoboyMotorCommandStatus moveMultipleMotors(std::vector<EPOSCommand>);
 
-  void stopMotors(std::map<unsigned int, int> motorMap);
-
-  void moveMultipleMotors(std::map<std::string, int> motorMap);
-
-  std::vector<unsigned int> getMotorIDs(void);
-  std::vector<double> readPosition(void);
-  bool set_controllers(roboy_can::setEPOSControllers::Request &req,
-                       roboy_can::setEPOSControllers::Response &res);
+  canRoboy(canRoboy &&) = default;
+  canRoboy &operator=(canRoboy &&) = default;
+  static auto connect(kaco::Device &&motor, MotorConfig &&robcof)
+      -> variant<canRoboy, std::pair<MotorConfig, FtResult>>;
 
 private:
   std::vector<std::string> getJointNames(void);
+  void configureNodes(void);
+  void initialise(std::string busname = "slcan0", std::string baudrate = "1M");
 
   unsigned int getCanAddress(std::string jointName);
 
@@ -45,12 +46,9 @@ private:
   void PDO_setup(std::string JointName);
 
   kaco::Master master_;
-  std::string busname_;
-  std::string baudrate_;
+
   std::map<unsigned int, kaco::Device &> deviceVector_;
   std::map<std::string, unsigned int> jointCanMap_;
   std::map<unsigned int, int> controlMode_;
   std::vector<unsigned int> motor_ids_;
-  ros::NodeHandle roboyCanNH_;
-  ros::ServiceServer setEposController_;
 };
