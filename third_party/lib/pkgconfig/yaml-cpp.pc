@@ -1,0 +1,9 @@
+libdir=/cm_workspace/src/flexrayusbinterface/third_party/lib
+includedir=/cm_workspace/src/flexrayusbinterface/third_party/include
+
+Name: Yaml-cpp
+Description: A YAML parser and emitter for C++
+Version: 0.5.3
+Requires:
+Libs: -L${libdir} -lyaml-cpp
+Cflags: -I${includedir}
