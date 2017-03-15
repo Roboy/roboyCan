@@ -13,23 +13,21 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  kacanopen
-  std_msgs
-  std_srvs
-  message_generation
+  #kacanopen
+  #std_msgs
+
 )
 # Boost
-find_package ( Boost REQUIRED COMPONENTS thread )
+#find_package ( Boost REQUIRED COMPONENTS thread )
 
 find_package ( Mapbox REQUIRED )
 find_package ( yaml-cpp REQUIRED )
 
 
-
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES libRoboyCanMotor
-  CATKIN_DEPENDS kacanopen std_msgs std_srvs
+  LIBRARIES roboy_can
+  CATKIN_DEPENDS # kacanopen std_msgs std_srvs
   DEPENDS Mapbox Boost YAML_CPP
 )
 
@@ -41,20 +39,20 @@ include_directories(
 )
 
 ## Declare a C++ library
- # add_library(libRoboyCanMotor
- #   src/Motors.cpp
- # )
- #
- # target_link_libraries(libRoboyCanMotor ${Boost_LIBRARIES})
- #
- # add_dependencies(libRoboyCanMotor ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
- #
- # target_link_libraries(libRoboyCanMotor
- #   ${catkin_LIBRARIES}
- # )
+ add_library(roboy_can
+src/networkParser.cpp
+   #src/roboy_can.cpp
+  # src/Motors.cpp
+ )
 
+  target_link_libraries(roboy_can ${YAML_CPP_LIBRARIES} -ldl)
+ #
+ add_dependencies(roboy_can ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 
-#  set_target_properties(libRoboyParser PROPERTIES LINKER_LANGUAGE CXX)
+ target_link_libraries(roboy_can
+   ${catkin_LIBRARIES}
+ )
+
 
 
 #############
@@ -62,10 +60,9 @@ include_directories(
 #############
 
 install(TARGETS
-        #libRoboyCanMotor
+        roboy_can
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         )
-
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
@@ -74,16 +71,15 @@ install(DIRECTORY include/${PROJECT_NAME}/
   PATTERN ".svn" EXCLUDE
 )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
-# install(FILES
-#   # myfile1
-#   # myfile2
-#   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-# )
-
 set(TEST_SOURCE_FILES
-    test/Parsers.cpp
+  test/Main.cpp
+  test/Parsers.cpp
 )
 catkin_add_gtest(unit_tests ${TEST_SOURCE_FILES})
-target_link_libraries(unit_tests ${YAML_CPP_LIBRARIES})
+
+add_dependencies(unit_tests ${roboy_can_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(unit_tests ${YAML_CPP_LIBRARIES} -ldl)
+target_link_libraries(unit_tests  ${catkin_LIBRARIES})
+target_link_libraries(unit_tests  roboy_can -ldl)
 configure_file(test/data/roboy.yaml ${CMAKE_CURRENT_BINARY_DIR}/roboy.yaml COPYONLY)
+configure_file(test/data/networks.yaml ${CMAKE_CURRENT_BINARY_DIR}/networks.yaml COPYONLY)

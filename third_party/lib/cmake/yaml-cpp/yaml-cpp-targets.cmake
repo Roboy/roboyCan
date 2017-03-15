@@ -39,7 +39,7 @@ unset(_expectedTargets)
 
 
 # The installation prefix configured by this project.
-set(_IMPORT_PREFIX "/cm_workspace/src/roboy_can/third_party")
+set(_IMPORT_PREFIX "/workspace/src/roboy_can/third_party")
 
 # Create imported target yaml-cpp
 add_library(yaml-cpp SHARED IMPORTED)
