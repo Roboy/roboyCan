@@ -1,3 +1,6 @@
+
+#pragma once
+
 #include "yaml-cpp/yaml.h"
 
 #include "roboy_can/MaxonConfig.hpp"
@@ -6,21 +9,6 @@
 namespace YAML {
 using namespace Maxon;
 
-#define MATCHERROROPTIONS_MACRO                                                \
-  [](RoboyParserErrorNotConfigured) -> RoboyParserErrorNotConfigured {         \
-    return RoboyParserErrorNotConfigured();                                    \
-  },                                                                           \
-      [](RoboyParserErrorOtherError) -> RoboyParserErrorOtherError {           \
-        return RoboyParserErrorOtherError();                                   \
-      },                                                                       \
-      [](RoboyParserErrorMotorUsesUndeclaredNetwork)                           \
-          -> RoboyParserErrorMotorUsesUndeclaredNetwork {                      \
-        return RoboyParserErrorMotorUsesUndeclaredNetwork();                   \
-      },                                                                       \
-      [](RoboyParserErrorMissingEntry) -> RoboyParserErrorMissingEntry {       \
-        return RoboyParserErrorMissingEntry();                                 \
-      }
-
 class RoboyParserErrorNotConfigured {};
 class RoboyParserErrorOtherError {};
 class RoboyParserErrorMotorUsesUndeclaredNetwork {};
@@ -28,43 +16,57 @@ class RoboyParserErrorMissingEntry {};
 class InvalidBaudrate {};
 class InvalidUsbDriver {};
 
-template <typename T> struct empty {};
-
-template <typename T> struct invalid {};
-
-template <typename T> struct missing {};
-template <typename T, typename Key> struct duplicate { Key key; };
-template <typename Case, typename Variant> auto passAlong(Case c) {
-  return Variant{c};
-};
-
 template <typename T>
 using ConversionTypes =
     variant<RoboyParserErrorNotConfigured, RoboyParserErrorOtherError,
             RoboyParserErrorMotorUsesUndeclaredNetwork,
             RoboyParserErrorMissingEntry, T>;
 
-using Sensors = variant<RoboyParserErrorNotConfigured,
-                        RoboyParserErrorMissingEntry, SensorConfig>;
+using Sensors = variant<empty<SensorConfig>, SensorConfig,
+                        missing<MaxonParameter>, invalid<MaxonParameter>>;
 
 template <> struct convert<Sensors> {
   static bool decode(Node const &node, Sensors &sensor) {
+    std::vector<Node> nodes = {
+        foo<uint32_t>{node["Pulse Number Incremental Encoder 1"], 16, 2500000},
+        foo<uint16_t>{node["Position Sensor Type"], 0, 8}};
+
+    sensor = std::accumulate(nodes.begin(), nodes.end(), Sensors{}, []() {});
     MaxonParameterList parameters_;
-    if (node["Pulse Number Incremental Encoder 1"] &&
-        node["Position Sensor Type"]) {
-      parameters_.emplace(
-          "Pulse Number Incremental Encoder 1",
-          node["Pulse Number Incremental Encoder 1"].as<uint32_t>());
-      parameters_.emplace("Position Sensor Type",
-                          node["Position Sensor Type"].as<uint16_t>());
-      sensor = SensorConfig(std::move(parameters_));
+    if (node["Pulse Number Incremental Encoder 1"]) {
+      return missing<SensorConfig>{"Pulse Number Incremental Encoder 1"};
+    }
+    if (node["Position Sensor Type"]) {
+      return missing<SensorConfig>{"Position Sensor Type"};
+    }
+
+#define LOWER_BOUND = 16
+#define UPPER_BOUND = 2500000
+    uint32_t pnie = node["Pulse Number Incremental Encoder 1"].as<uint32_t>());
+    if (pnie < LOWER_BOUND || pnie > UPPER_BOUND) {
+      return invalid<SensorConfig>{"Pulse Number Incremental Encoder 1"};
     } else
-      sensor = RoboyParserErrorMissingEntry();
+      parameters_.emplace("Pulse Number Incremental Encoder 1", pnie);
+#undef LOWER_BOUND
+#undef UPPER_BOUND
+
+#define LOWER_BOUND = 0
+#define UPPER_BOUND = 8
+    uint16_t pst = node["Position Sensor Type"].as<uint16_t>();
+    if (pst < LOWER_BOUND || pst > UPPER_BOUND) {
+      return invalid<SensorConfig>{"Position Sensor Type"};
+    } else
+      parameters_.emplace("Position Sensor Type", pst);
+#undef LOWER_BOUND
+#undef UPPER_BOUND
+    sensor = SensorConfig(std::move(parameters_));
+
     return true;
   }
 };
 
-using Controllers = variant<RoboyParserErrorNotConfigured,
+using Controllers = variant<empty<MaxonControllers>, missing<MaxonParameter>,
+                            invalid<MaxonParameter>,
                             RoboyParserErrorMissingEntry, MaxonControllers>;
 
 template <> struct convert<Controllers> {
@@ -134,113 +136,6 @@ template <> struct convert<Controllers> {
     }
 
     controllers = RoboyParserErrorMissingEntry();
-    return true;
-  }
-};
-
-using Baudrate = variant<invalid<KaCanOpenBaudrate>, KaCanOpenBaudrate>;
-
-template <> struct convert<Baudrate> {
-  static bool decode(Node const &node, Baudrate &baud) {
-    std::string baudString = node.as<std::string>();
-
-    if (baudString == "10k")
-      baud = KaCanOpenBaudrate::Baud10k;
-    else if (baudString == "20k")
-      baud = KaCanOpenBaudrate::Baud20k;
-    else if (baudString == "50k")
-      baud = KaCanOpenBaudrate::Baud50k;
-    else if (baudString == "100k")
-      baud = KaCanOpenBaudrate::Baud100k;
-    else if (baudString == "125k")
-      baud = KaCanOpenBaudrate::Baud125k;
-    else if (baudString == "250k")
-      baud = KaCanOpenBaudrate::Baud250k;
-    else if (baudString == "500k")
-      baud = KaCanOpenBaudrate::Baud500k;
-    else if (baudString == "800k")
-      baud = KaCanOpenBaudrate::Baud800k;
-    else if (baudString == "1M")
-      baud = KaCanOpenBaudrate::Baud1M;
-    else
-      baud = invalid<KaCanOpenBaudrate>{};
-    return true;
-  }
-};
-
-using UsbOptions = variant<invalid<KaCanOpenUsbOptions>, KaCanOpenUsbOptions>;
-
-template <> struct convert<UsbOptions> {
-  static bool decode(Node const &node, UsbOptions &usbopt) {
-    std::string usboptString = node.as<std::string>();
-
-    if (usboptString == "usbtin")
-      usbopt = KaCanOpenUsbOptions::USBTIN;
-    else if (usboptString == "peak_linux")
-      usbopt = KaCanOpenUsbOptions::PEAK;
-    else
-      usbopt = invalid<KaCanOpenUsbOptions>{};
-    return true;
-  }
-};
-
-auto growNetwork(Networks previous, YAML::const_iterator subnet) -> Network {
-  if (!subnet.second["Baudrate"]) {
-    return missing<Baudrate>{};
-  }
-  if (!subnet.second["Driver"]) {
-    return missing<Driver>{};
-  }
-  if (!subnet.second["USB Serial"]) {
-    return missing<std::string>{};
-  }
-
-  return subnet.second["Baudrate"].as<Baudrate>().match(
-      [](InvalidBaudrate) -> Network { return {invalid<Baudrate>{}}; },
-      [](KaCanOpenBaudrate baudr) -> Network {
-
-        return subnet.second["Driver"].as<Baudrate>().match(
-            [](invalid<KaCanOpenUsbOptions>) {
-              return Network{invalid<KaCanOpenUsbOptions>{}};
-            },
-            [](KaCanOpenUsbOptions usbopt) -> Network {
-              auto serial = subnet.second["USB Serial"].as<std::string>();
-              auto key = subnet.first.as<std::string>();
-              if (previous
-                      .emplace(key,
-                               NetworkConfig(subnet, usbopt, baudr, serial))
-                      .second) {
-                return duplicate<NetworkConfig, std::string>{key};
-              }
-              return {previous};
-            });
-      });
-}
-
-using Network =
-    variant<empty<Network>, Networks, missing<Baudrate>, invalid<Baudrate>,
-            missing<KaCanOpenUsbOptions>, invalid<KaCanOpenUsbOptions>,
-            duplicate<NetworkConfig, std::string>>;
-
-template <> struct convert<Network> {
-  static bool decode(Node const &node, Network &network) {
-
-    network = std::accumulate(
-        node.begin(), node.end(), Network{},
-        [](Network nw, YAML::const_iterator subnet) {
-          return nw.match(
-              [](empty<Network>) -> Network {
-                return growNetwork(Networks{}, subnet);
-              },
-              [](Networks previous) -> Network {
-                return growNetwork(previous, subnet);
-              },
-              passAlong<missing<Baudrate>, Network>,
-              passAlong<invalid<Baudrate>, Network>,
-              passAlong<missing<KaCanOpenUsbOptions>, Network>,
-              passAlong<invalid<KaCanOpenUsbOptions>, Network>,
-              passAlong<duplicate<NetworkConfig, std::string>, Network>);
-        });
     return true;
   }
 };

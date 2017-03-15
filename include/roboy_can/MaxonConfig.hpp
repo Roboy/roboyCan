@@ -1,6 +1,9 @@
-#include "roboy_can/Types.hpp"
+#pragma once
 
-namespace Maxon {
+#include "roboy_can/Types.hpp"
+#include <map>
+#include <vector>
+
 enum class MotorControlArchitecture { MAXON, FLEXRAY, SPI };
 
 using MaxonParameter = variant<int16_t, uint32_t, int32_t>;
@@ -36,6 +39,7 @@ private:
   MaxonParameterList parameters_ = {{"Pulse Number Incremental Encoder 1", 512},
                                     {"Position Sensor Type", 2}};
 };
+
 class ProfilePositionModeConfig {
 public:
   ProfilePositionModeConfig();
@@ -92,6 +96,7 @@ using Networks = std::map<std::string, NetworkConfig>;
 
 class MotorConfig {
 public:
+  MotorConfig();
   MotorConfig(std::string n, unsigned int cid, NetworkConfig nw,
               SensorConfig sc, MaxonControllers ctrls) {
     name = n;
@@ -111,13 +116,15 @@ class MaxonConfig {
 public:
   MaxonConfig();
   MaxonConfig(std::vector<MotorConfig> mcs) {
-    for (auto &&mc : mcs)
+    for (auto &&mc : mcs) {
       addMotor(std::move(mc));
+    }
   };
   void addMotor(MotorConfig &&mc) { motors_[mc.name] = std::move(mc); };
 
   std::map<std::string, MotorConfig> motors_;
 };
+
 using Maxon = std::map<MotorControlArchitecture, variant<MaxonConfig>>;
 
 class RoboyConfig {
@@ -125,4 +132,3 @@ public:
   RoboyConfig();
   Maxon configs;
 };
-} // end of namspace Maxon
