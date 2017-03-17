@@ -27,11 +27,15 @@ enum class KaCanOpenBaudrate : unsigned int {
 
 class SensorConfig {
 public:
-  SensorConfig();
-  SensorConfig(MaxonParameterList &&pms) { parameters_ = std::move(pms); };
-  MaxonParameterList getParameterList(void) { return parameters_; };
-  MaxonParameter getParameter(std::string name) { return parameters_[name]; };
-  void setParameter(std::string name, MaxonParameter mp) {
+  SensorConfig() = default;
+  inline SensorConfig(MaxonParameterList &&pms) {
+    parameters_ = std::move(pms);
+  };
+  inline MaxonParameterList getParameterList(void) { return parameters_; };
+  inline MaxonParameter getParameter(std::string name) {
+    return parameters_[name];
+  };
+  inline void setParameter(std::string name, MaxonParameter mp) {
     parameters_[name] = mp;
   };
 
@@ -42,17 +46,17 @@ private:
 
 class ProfilePositionModeConfig {
 public:
-  ProfilePositionModeConfig();
-  ProfilePositionModeConfig(MaxonParameterList &&pms) {
+  ProfilePositionModeConfig() = default;
+  inline ProfilePositionModeConfig(MaxonParameterList &&pms) {
     parameters_ = std::move(pms);
   };
 
   const std::string type = "Profile Position Mode";
-  MaxonParameterList getParameterList(void) { return parameters_; };
-  MaxonParameter getParameter(std::string name) {
+  inline MaxonParameterList getParameterList(void) { return parameters_; };
+  inline MaxonParameter getParameter(std::string name) {
     return (parameters_.at(name));
   };
-  void setParameter(std::string name, MaxonParameter mp) {
+  inline void setParameter(std::string name, MaxonParameter mp) {
     parameters_[name] = mp;
   };
 
@@ -74,17 +78,17 @@ using MaxonControllers = std::map<std::string, MaxonControllerConfig>;
 
 class NetworkConfig {
 public:
-  NetworkConfig();
-  NetworkConfig(std::string tag, KaCanOpenUsbOptions d, KaCanOpenBaudrate br,
-                std::string sn) {
+  NetworkConfig() = default;
+  inline NetworkConfig(std::string tag, KaCanOpenUsbOptions d,
+                       KaCanOpenBaudrate br, std::string sn) {
     yamlTag_ = tag;
     driver_ = d;
     baudrate_ = br;
     usbSerialNumber_ = sn;
   };
-  KaCanOpenUsbOptions getDriver(void) { return driver_; };
-  KaCanOpenBaudrate getBaudrate(void) { return baudrate_; };
-  std::string getUsbSerial(void) { return usbSerialNumber_; };
+  inline KaCanOpenUsbOptions getDriver(void) { return driver_; };
+  inline KaCanOpenBaudrate getBaudrate(void) { return baudrate_; };
+  inline std::string getUsbSerial(void) { return usbSerialNumber_; };
 
 private:
   KaCanOpenUsbOptions driver_;
@@ -96,9 +100,9 @@ using Networks = std::map<std::string, NetworkConfig>;
 
 class MotorConfig {
 public:
-  MotorConfig();
-  MotorConfig(std::string n, unsigned int cid, NetworkConfig nw,
-              SensorConfig sc, MaxonControllers ctrls) {
+  MotorConfig() = default;
+  inline MotorConfig(std::string n, unsigned int cid, NetworkConfig nw,
+                     SensorConfig sc, MaxonControllers ctrls) {
     name = n;
     canId = cid;
     network = nw;
@@ -114,13 +118,13 @@ public:
 
 class MaxonConfig {
 public:
-  MaxonConfig();
-  MaxonConfig(std::vector<MotorConfig> mcs) {
+  MaxonConfig() = default;
+  inline MaxonConfig(std::vector<MotorConfig> mcs) {
     for (auto &&mc : mcs) {
       addMotor(std::move(mc));
     }
   };
-  void addMotor(MotorConfig &&mc) { motors_[mc.name] = std::move(mc); };
+  inline void addMotor(MotorConfig &&mc) { motors_[mc.name] = std::move(mc); };
 
   std::map<std::string, MotorConfig> motors_;
 };
@@ -129,6 +133,6 @@ using Maxon = std::map<MotorControlArchitecture, variant<MaxonConfig>>;
 
 class RoboyConfig {
 public:
-  RoboyConfig();
+  RoboyConfig() = default;
   Maxon configs;
 };
