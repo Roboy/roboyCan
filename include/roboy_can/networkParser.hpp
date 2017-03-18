@@ -45,7 +45,6 @@ auto growNetwork(Networks previous, YAML::const_iterator::value_type subnet)
               if (previous
                       .emplace(key, NetworkConfig(key, usbopt, baudr, serial))
                       .second == false) {
-                std::cout << "duplicate key is: " << key << std::endl;
                 return {duplicate<NetworkConfig, std::string>{key}};
               }
               return {previous};
@@ -99,7 +98,6 @@ template <> struct convert<UsbOptions> {
 
 template <> struct convert<Network> {
   static bool decode(Node const &node, Network &network) {
-    std::cout << "size of node: " << node.size() << std::endl;
     network = std::accumulate(
         node.begin(), node.end(), Network{},
         [](Network nw, YAML::const_iterator::value_type subnet) {

@@ -4,6 +4,72 @@ Network: #Fixed tag
       Baudrate: 1M #
       USB Serial: A1B2C3
     Right: #User Configurable ID
+      Driver: peak_linux
+      Baudrate: 500k
+      USB Serial: D4E5F6
+
+Network_missing_baudrate: #Fixed tag
+    Left: #User Configurable ID
+      Driver: usbtin
+      Baudrate: 1M #
+      USB Serial: A1B2C3
+    Right: #User Configurable ID
+      Driver: usbtin
+      USB Serial: D4E5F6
+
+Network_wrong_baudrate: #Fixed tag
+    Left: #User Configurable ID
+      Driver: usbtin
+      Baudrate: 10M #
+      USB Serial: A1B2C3
+
+Network_missing_UsbOption: #Fixed tag
+    Left: #User Configurable ID
+      Driver: usbtin
+      Baudrate: 1M #
+      USB Serial: A1B2C3
+    Right: #User Configurable ID
+      Baudrate: 1M #
+      USB Serial: D4E5F6
+
+Network_wrong_UsbOption: #Fixed tag
+    Left: #User Configurable ID
+      Driver: Pancakes
+      Baudrate: 1M #
+      USB Serial: A1B2C3
+
+Network_missing_serial: #Fixed tag
+    Left: #User Configurable ID
+      Driver: usbtin
+      Baudrate: 1M #
+      USB Serial: A1B2C3
+    Right: #User Configurable ID
       Driver: usbtin
       Baudrate: 1M
+
+Network_empty_serial: #Fixed tag
+    Left: #User Configurable ID
+      Driver: usbtin
+      Baudrate: 1M #
+      USB Serial: A1B2C3
+    Right: #User Configurable ID
+      Driver: usbtin
+      Baudrate: 1M #
+      USB Serial:
+
+Network_duplicate_network: #Fixed tag
+    Left: #User Configurable ID
+      Driver: usbtin
+      Baudrate: 1M #
+      USB Serial: A1B2C3
+    Left: #User Configurable ID
+      Driver: usbtin
+      Baudrate: 1M #
       USB Serial: D4E5F6
+
+Network_duplicate_driver: #Fixed tag
+    Left: #User Configurable ID
+      Driver: usbtin
+      Driver: usbtin
+      Baudrate: 1M #
+      USB Serial: A1B2C3

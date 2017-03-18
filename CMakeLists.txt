@@ -73,7 +73,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 set(TEST_SOURCE_FILES
   test/Main.cpp
-  test/Parsers.cpp
+  test/ParserNetwork.cpp
 )
 catkin_add_gtest(unit_tests ${TEST_SOURCE_FILES})
 
