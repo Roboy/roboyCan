@@ -2,3 +2,12 @@ Standard Motor Configuration: # Fixed Tag
   Sensor Configuration:
     Pulse Number Incremental Encoder 1: 512
     Position Sensor Type: 2
+
+Standard Motor Configuration Missing PNIE: # Fixed Tag
+  Sensor Configuration:
+    Position Sensor Type: 2
+
+Standard Motor Configuration Invalid PNIE: # Fixed Tag
+  Sensor Configuration:
+    Pulse Number Incremental Encoder 1: 2500001 # invalid value, its over 2500000
+    Position Sensor Type: 2

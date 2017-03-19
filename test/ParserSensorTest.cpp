@@ -61,3 +61,47 @@ TEST(SensorValues, sensor_yaml) {
       seco.getParameter("Position Sensor Type"),
       static_cast<uint16_t>(EposPositionSensorType::INC_ENCODER_1_W_INDEX_3CH));
 }
+
+TEST(MissingPNIE, sensor_yaml) {
+  auto node = YAML::LoadFile("sensor.yaml");
+  Sensor se = node["Standard Motor Configuration Missing PNIE"].as<Sensor>();
+
+  unsigned int isSensor = 12;
+
+  isSensor = se.match(
+      [](empty<Sensor>) -> unsigned int { return 0; },
+      [](missing<Sensor>) -> unsigned int { return 1; },
+      [](Sensor sen) -> unsigned int { return 2; },
+      [](invalid<EposPulseNumberIncrementalEncoders>) -> unsigned int {
+        return 3;
+      },
+      [](missing<EposPulseNumberIncrementalEncoders>) -> unsigned int {
+        return 4;
+      },
+      [](invalid<EposPositionSensorType>) -> unsigned int { return 5; },
+      [](missing<EposPositionSensorType>) -> unsigned int { return 6; });
+
+  EXPECT_EQ(isSensor, 4);
+}
+
+TEST(InvalidPNIE, sensor_yaml) {
+  auto node = YAML::LoadFile("sensor.yaml");
+  Sensor se = node["Standard Motor Configuration Invalid PNIE"].as<Sensor>();
+
+  unsigned int isSensor = 12;
+
+  isSensor = se.match(
+      [](empty<Sensor>) -> unsigned int { return 0; },
+      [](missing<Sensor>) -> unsigned int { return 1; },
+      [](Sensor sen) -> unsigned int { return 2; },
+      [](invalid<EposPulseNumberIncrementalEncoders>) -> unsigned int {
+        return 3;
+      },
+      [](missing<EposPulseNumberIncrementalEncoders>) -> unsigned int {
+        return 4;
+      },
+      [](invalid<EposPositionSensorType>) -> unsigned int { return 5; },
+      [](missing<EposPositionSensorType>) -> unsigned int { return 6; });
+
+  EXPECT_EQ(isSensor, 3);
+}
