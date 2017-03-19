@@ -22,9 +22,6 @@ using ConversionTypes =
             RoboyParserErrorMotorUsesUndeclaredNetwork,
             RoboyParserErrorMissingEntry, T>;
 
-using Sensors = variant<empty<SensorConfig>, SensorConfig,
-                        missing<MaxonParameter>, invalid<MaxonParameter>>;
-
 template <> struct convert<Sensors> {
   static bool decode(Node const &node, Sensors &sensor) {
     std::vector<Node> nodes = {

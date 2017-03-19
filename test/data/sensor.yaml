@@ -1,0 +1,4 @@
+Standard Motor Configuration: # Fixed Tag
+  Sensor Configuration:
+    Pulse Number Incremental Encoder 1: 512
+    Position Sensor Type: 2

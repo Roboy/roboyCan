@@ -1,15 +1,27 @@
 #pragma once
 
 #include "roboy_can/Types.hpp"
+#include "roboy_can/errorHandling.hpp"
 #include <map>
 #include <vector>
 
 enum class MotorControlArchitecture { MAXON, FLEXRAY, SPI };
+using EposPulseNumberIncrementalEncoders = uint32_t;
+enum class EposPositionSensorType : uint16_t {
+  UNKNOWN,
+  INC_ENCODER_1_W_INDEX_3CH,
+  INC_ENCODER_1_WO_INDEX_2CH,
+  HALL_SENSORS,
+  ABS_ENCODER_SSI, // only available on EPOS2 70/10, 50/5
+  RESERVED,
+  INC_ENCODER_2_W_INDEX_3CH, // only available on EPOS2 70/10, 50/5
+  INC_ENCODER_2_W_INDEX_2CH, // only available on EPOS2 70/10, 50/5 and EPOS2
+                             // Module
+  SINUS_INC_ENCODER_2
+};
+using MaxonParameter = variant<int16_t, uint32_t, int32_t, uint16_t>;
 
-using MaxonParameter = variant<int16_t, uint32_t, int32_t>;
-
-using MaxonParameterList =
-    std::map<std::string, variant<int16_t, uint32_t, int32_t>>;
+using MaxonParameterList = std::map<std::string, MaxonParameter>;
 
 enum class KaCanOpenUsbOptions { USBTIN, PEAK };
 
@@ -25,23 +37,35 @@ enum class KaCanOpenBaudrate : unsigned int {
   Baud1M
 };
 
+using PulseNumberIncrementalEncoder_1 =
+    variant<missing<EposPulseNumberIncrementalEncoders>,
+            invalid<EposPulseNumberIncrementalEncoders>,
+            EposPulseNumberIncrementalEncoders>;
+
+using PulseNumberIncrementalEncoder_2 = PulseNumberIncrementalEncoder_1;
+
+using PositionSensorType =
+    variant<missing<EposPositionSensorType>, invalid<EposPositionSensorType>,
+            EposPositionSensorType>;
+
 class SensorConfig {
 public:
   SensorConfig() = default;
-  inline SensorConfig(MaxonParameterList &&pms) {
-    parameters_ = std::move(pms);
+
+  inline SensorConfig(EposPulseNumberIncrementalEncoders pnie1,
+                      EposPositionSensorType pst) {
+    parameters_["Pulse Number Incremental Encoder 1"] = {pnie1};
+    parameters_["Position Sensor Type"] = static_cast<uint16_t>(pst);
   };
+
   inline MaxonParameterList getParameterList(void) { return parameters_; };
+
   inline MaxonParameter getParameter(std::string name) {
     return parameters_[name];
   };
-  inline void setParameter(std::string name, MaxonParameter mp) {
-    parameters_[name] = mp;
-  };
 
 private:
-  MaxonParameterList parameters_ = {{"Pulse Number Incremental Encoder 1", 512},
-                                    {"Position Sensor Type", 2}};
+  MaxonParameterList parameters_;
 };
 
 class ProfilePositionModeConfig {
@@ -57,7 +81,7 @@ public:
     return (parameters_.at(name));
   };
   inline void setParameter(std::string name, MaxonParameter mp) {
-    parameters_[name] = mp;
+    parameters_[name] = {mp};
   };
 
 private:

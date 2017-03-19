@@ -41,6 +41,7 @@ include_directories(
 ## Declare a C++ library
  add_library(roboy_can
 src/networkParser.cpp
+src/sensorParser.cpp
    #src/roboy_can.cpp
   # src/Motors.cpp
  )
@@ -73,7 +74,8 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 set(TEST_SOURCE_FILES
   test/Main.cpp
-  test/ParserNetwork.cpp
+  test/ParserNetworkTest.cpp
+  test/ParserSensorTest.cpp
 )
 catkin_add_gtest(unit_tests ${TEST_SOURCE_FILES})
 
@@ -83,3 +85,4 @@ target_link_libraries(unit_tests  ${catkin_LIBRARIES})
 target_link_libraries(unit_tests  roboy_can -ldl)
 configure_file(test/data/roboy.yaml ${CMAKE_CURRENT_BINARY_DIR}/roboy.yaml COPYONLY)
 configure_file(test/data/networks.yaml ${CMAKE_CURRENT_BINARY_DIR}/networks.yaml COPYONLY)
+configure_file(test/data/sensor.yaml ${CMAKE_CURRENT_BINARY_DIR}/sensor.yaml COPYONLY)
