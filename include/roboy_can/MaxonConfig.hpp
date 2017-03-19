@@ -19,7 +19,7 @@ enum class EposPositionSensorType : uint16_t {
                              // Module
   SINUS_INC_ENCODER_2
 };
-using MaxonParameter = variant<int16_t, uint32_t, int32_t, uint16_t>;
+using MaxonParameter = variant<int16_t, uint16_t, int32_t, uint32_t>;
 
 using MaxonParameterList = std::map<std::string, MaxonParameter>;
 

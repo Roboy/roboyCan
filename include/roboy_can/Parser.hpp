@@ -22,8 +22,8 @@ using ConversionTypes =
             RoboyParserErrorMotorUsesUndeclaredNetwork,
             RoboyParserErrorMissingEntry, T>;
 
-template <> struct convert<Sensors> {
-  static bool decode(Node const &node, Sensors &sensor) {
+template <> struct convert<Sensor> {
+  static bool decode(Node const &node, Sensor &sensor) {
     std::vector<Node> nodes = {
         foo<uint32_t>{node["Pulse Number Incremental Encoder 1"], 16, 2500000},
         foo<uint16_t>{node["Position Sensor Type"], 0, 8}};
@@ -155,7 +155,7 @@ template <> struct convert<Maxons> {
     Sensors sensor;
     if (node["Standard Motor Configuration"]["Sensor Configuration"])
       sensor = node["Standard Motor Configuration"]["Sensor Configuration"]
-                   .as<Sensors>()
+                   .as<Sensor>()
                    .match([](SensorConfig sc) -> SensorConfig { return sc; },
                           MATCHERROROPTIONS_MACRO);
     else {

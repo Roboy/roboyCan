@@ -6,10 +6,9 @@
 #include "yaml-cpp/yaml.h"
 
 #include <numeric>
-using Sensors = variant<empty<SensorConfig>, SensorConfig,
-                        missing<MaxonParameter>, invalid<MaxonParameter>>;
+
 using Sensor =
-    variant<empty<Sensors>, missing<Sensors>, Sensors,
+    variant<empty<SensorConfig>, missing<SensorConfig>, SensorConfig,
             invalid<EposPulseNumberIncrementalEncoders>,
             missing<EposPulseNumberIncrementalEncoders>,
             invalid<EposPositionSensorType>, missing<EposPositionSensorType>>;
@@ -55,7 +54,7 @@ template <> struct convert<Sensor> {
   static bool decode(Node const &input_node, Sensor &sensor) {
     Node node;
     if (!input_node["Sensor Configuration"]) {
-      sensor = missing<Sensors>{};
+      sensor = missing<SensorConfig>{};
       return true;
     } else
       node = input_node["Sensor Configuration"];
