@@ -105,3 +105,24 @@ TEST(InvalidPNIE, sensor_yaml) {
 
   EXPECT_EQ(isSensor, 3);
 }
+TEST(InvalidPNIE_Value, sensor_yaml) {
+  auto node = YAML::LoadFile("sensor.yaml");
+  Sensor se = node["Standard Motor Configuration Invalid PNIE"].as<Sensor>();
+
+  unsigned int invEPNIE;
+
+  invEPNIE = se.match(
+      [](empty<Sensor>) -> unsigned int { return 0; },
+      [](missing<Sensor>) -> unsigned int { return 1; },
+      [](Sensor sen) -> unsigned int { return 2; },
+      [](invalid<EposPulseNumberIncrementalEncoders> inv) -> unsigned int {
+        return inv.outOfBoundInput;
+      },
+      [](missing<EposPulseNumberIncrementalEncoders>) -> unsigned int {
+        return 4;
+      },
+      [](invalid<EposPositionSensorType>) -> unsigned int { return 5; },
+      [](missing<EposPositionSensorType>) -> unsigned int { return 6; });
+
+  EXPECT_EQ(invEPNIE, 2500001);
+}
