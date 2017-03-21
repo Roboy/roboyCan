@@ -28,15 +28,10 @@ auto growNetwork(Networks previous, YAML::const_iterator::value_type subnet)
   }
 
   return subnet.second["Baudrate"].as<Baudrate>().match(
-      [](invalid<KaCanOpenBaudrate>) -> Network {
-        return {invalid<KaCanOpenBaudrate>{}};
-      },
+      passAlong<invalid<KaCanOpenBaudrate>, Network>{},
       [&subnet, &previous](KaCanOpenBaudrate baudr) -> Network {
-
         return subnet.second["Driver"].as<UsbOptions>().match(
-            [](invalid<KaCanOpenUsbOptions>) -> Network {
-              return {invalid<KaCanOpenUsbOptions>{}};
-            },
+            passAlong<invalid<KaCanOpenUsbOptions>, Network>{},
             [&previous, &subnet,
              &baudr](KaCanOpenUsbOptions usbopt) -> Network {
               auto serial = subnet.second["USB Serial"].as<std::string>();
