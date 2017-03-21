@@ -45,6 +45,7 @@ TEST(ParseVelocity, controller_yaml) {
 
   EXPECT_EQ(isVelocity, 3);
 }
+
 TEST(ParseAcceleration, controller_yaml) {
   auto const node = YAML::LoadFile("controller.yaml");
 
@@ -61,6 +62,7 @@ TEST(ParseAcceleration, controller_yaml) {
 
   EXPECT_EQ(isAcceleration, 3);
 }
+
 TEST(MissingMaxAcceleration, controller_yaml) {
   auto const node = YAML::LoadFile("controller.yaml");
 
@@ -70,41 +72,29 @@ TEST(MissingMaxAcceleration, controller_yaml) {
 
   std::string isAcceleration = "";
 
-  isAcceleration =
-      acc.match([](empty<MaxonParameterList>) -> unsigned int { return 0; },
-                [](missing<MaxonParameter> mm) -> unsigned int {
-                  std::cout << mm.paramName << std::endl;
-                  return 1;
-                },
-                [](invalid<MaxonParameter> mm) -> unsigned int {
-                  std::cout << mm.paramName << std::endl;
-                  return 2;
-                },
-                [](MaxonParameterList) -> unsigned int { return 3; });
+  isAcceleration = acc.match(
+      [](empty<MaxonParameterList>) -> std::string { return ""; },
+      [](missing<uint32_t> mm) -> std::string { return mm.paramName; },
+      [](invalid<uint32_t> mm) -> std::string { return mm.paramName; },
+      [](MaxonParameterList) -> std::string { return ""; });
 
-  EXPECT_EQ(isAcceleration, 0);
+  EXPECT_EQ(isAcceleration, std::string("Max Acceleration"));
 }
-// TEST(MissingProfileAcceleration, controller_yaml) {
-//   auto const node = YAML::LoadFile("controller.yaml");
-//
-//   Acceleration acc = node["Control Mode Configuration"]
-//                          ["Profile Position Mode Missing Profile Acc"]
-//                              .as<Acceleration>();
-//
-//   std::string isAcceleration = "";
-//
-//   isAcceleration =
-//       acc.match([](empty<MaxonParameterList>) -> unsigned int { return 0;
-//       },
-//                 [](missing<MaxonParameter> mm) -> unsigned int {
-//                   std::cout << mm.paramName << std::endl;
-//                   return 1;
-//                 },
-//                 [](invalid<MaxonParameter> mm) -> unsigned int {
-//                   std::cout << mm.paramName << std::endl;
-//                   return 2;
-//                 },
-//                 [](MaxonParameterList) -> unsigned int { return 3; });
-//
-//   EXPECT_EQ(isAcceleration, 2);
-// }
+
+TEST(MissingProfileAcceleration, controller_yaml) {
+  auto const node = YAML::LoadFile("controller.yaml");
+
+  Acceleration acc = node["Control Mode Configuration"]
+                         ["Profile Position Mode Missing Profile Acc"]
+                             .as<Acceleration>();
+
+  std::string isAcceleration = "";
+
+  isAcceleration = acc.match(
+      [](empty<MaxonParameterList>) -> std::string { return ""; },
+      [](missing<uint32_t> mm) -> std::string { return mm.paramName; },
+      [](invalid<uint32_t> mm) -> std::string { return mm.paramName; },
+      [](MaxonParameterList) -> std::string { return ""; });
+
+  EXPECT_EQ(isAcceleration, std::string("Profile Acceleration"));
+}
