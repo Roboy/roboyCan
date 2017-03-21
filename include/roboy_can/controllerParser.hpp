@@ -28,7 +28,8 @@ enum class MotionProfileTypeValue : int16_t {
   SIN2_RAMP_SINUSOIDAL_PROFILE
 };
 using MotionProfileType =
-    variant<invalid<MotionProfileTypeValue>, MotionProfileTypeValue>;
+    variant<empty<MotionProfileTypeValue>, missing<MotionProfileTypeValue>,
+            invalid<MotionProfileTypeValue>, MotionProfileTypeValue>;
 
 using Controllers =
     variant<empty<MaxonControllers>, missing<MaxonControllers>,
@@ -60,18 +61,20 @@ template <> struct convert<MaxFollowingError> {
 
 template <> struct convert<PositionLimit> {
   static bool decode(Node const &node, PositionLimit &mfe) {
-    if (!node["Max Position Limit"]) {
+    if (!node["Position"]["Max Position Limit"]) {
       mfe = missing<int32_t>{"Max Position Limit"};
       return true;
     }
-    if (!node["Min Position Limit"]) {
+    if (!node["Position"]["Min Position Limit"]) {
       mfe = missing<int32_t>{"Min Position Limit"};
       return true;
     }
 
     mfe = MaxonParameterList{
-        {"Max Position Limit", node["Max Position Limit"].as<int32_t>()},
-        {"Min Position Limit", node["Min Position Limit"].as<int32_t>()}};
+        {"Max Position Limit",
+         node["Position"]["Max Position Limit"].as<int32_t>()},
+        {"Min Position Limit",
+         node["Position"]["Min Position Limit"].as<int32_t>()}};
     std::cout << "ok" << std::endl;
 
     return true;
@@ -80,20 +83,21 @@ template <> struct convert<PositionLimit> {
 
 template <> struct convert<Velocity> {
   static bool decode(Node const &node, Velocity &mfe) {
-    if (!node["Max Profile Velocity"]) {
+    if (!node["Velocity"]["Max Profile Velocity"]) {
       mfe = missing<MaxProfileVelocity>{};
       return true;
     };
-    if (!node["Profile Velocity"]) {
+    if (!node["Velocity"]["Profile Velocity"]) {
       mfe = missing<ProfileVelocity>{};
       return true;
     };
-    MaxProfileVelocity mpv =
-        node["Max Profile Velocity"].as<MaxProfileVelocity>();
-    // Limit depends on Maximal Gear Speed and Maximal Motor Speed. See EPOS2
+    Node n = node["Velocity"];
+    MaxProfileVelocity mpv = n["Max Profile Velocity"].as<MaxProfileVelocity>();
+    // Limit depends on Maximal Gear Speed and Maximal Motor Speed. See
+    // EPOS2
     // Firmware 8.2.106 Maximal Profile Velocity and Table 8-119
 
-    mfe = withinBounds<ProfileVelocity>(node, "Profile Velocity", 1, mpv)
+    mfe = withinBounds<ProfileVelocity>(n, "Profile Velocity", 1, mpv)
               .match(passAlong<invalid<ProfileVelocity>, Velocity>{},
                      [&mpv](ProfileVelocity value) -> Velocity {
                        return MaxonParameterList{{"Max Profile Velocity", mpv},
@@ -105,64 +109,72 @@ template <> struct convert<Velocity> {
 
 template <> struct convert<Acceleration> {
   static bool decode(Node const &node, Acceleration &mfe) {
-    if (!node["Max Acceleration"]) {
+    if (!node["Acceleration"]) {
+      return true;
+    }
+    Node n = node["Acceleration"];
+    if (!n["Max Acceleration"]) {
       mfe = missing<uint32_t>{std::string("Max Acceleration")};
       return true;
     }
 
-    if (!node["Profile Acceleration"]) {
+    if (!n["Profile Acceleration"]) {
       mfe = missing<uint32_t>{std::string("Profile Acceleration")};
       return true;
     }
 
-    if (!node["Profile Deceleration"]) {
+    if (!n["Profile Deceleration"]) {
       mfe = missing<uint32_t>{std::string("Profile Deceleration")};
       return true;
     }
-    if (!node["Quickstop Deceleration"]) {
+    if (!n["Quickstop Deceleration"]) {
       mfe = missing<uint32_t>{std::string("Quickstop Deceleration")};
       return true;
     }
     // std::vector<std::string> accelerationParameters = {
-    //     "Max Acceleration", "Profile Acceleration", "Profile Deceleration",
+    //     "Max Acceleration", "Profile Acceleration", "Profile
+    //     Deceleration",
     //     "Quickstop Deceleration"};
-    mfe =
-        withinBounds<uint32_t>(node, "Max Acceleration", 0, 4294967295)
-            .match(
-                passAlong<invalid<uint32_t>, Acceleration>{},
-                [&node](uint32_t mac) -> Acceleration {
-                  return withinBounds<uint32_t>(node, "Profile Acceleration", 1,
-                                                mac)
-                      .match(
-                          passAlong<invalid<uint32_t>, Acceleration>(),
-                          [&node, mac](uint32_t pac) -> Acceleration {
-                            return withinBounds<uint32_t>(
-                                       node, "Profile Deceleration", 1, mac)
-                                .match(
-                                    passAlong<invalid<uint32_t>,
-                                              Acceleration>{},
-                                    [&node, mac,
-                                     pac](uint32_t pdc) -> Acceleration {
-                                      return withinBounds<uint32_t>(
-                                                 node, "Quickstop Deceleration",
-                                                 1, mac)
-                                          .match(
-                                              passAlong<invalid<uint32_t>,
-                                                        Acceleration>{},
-                                              [mac, pac, pdc](
-                                                  uint32_t qd) -> Acceleration {
-                                                return {MaxonParameterList{
-                                                    {"Max Acceleration", mac},
-                                                    {"Profile Acceleration",
-                                                     pac},
-                                                    {"Profile Deceleration",
-                                                     pdc},
-                                                    {"Quickstop Deceleration ",
-                                                     qd}}};
-                                              });
-                                    });
-                          });
-                });
+    mfe = withinBounds<uint32_t>(n, "Max Acceleration", 0, 4294967295)
+              .match(
+                  passAlong<invalid<uint32_t>, Acceleration>{},
+                  [&n](uint32_t mac) -> Acceleration {
+                    return withinBounds<uint32_t>(n, "Profile Acceleration", 1,
+                                                  mac)
+                        .match(
+                            passAlong<invalid<uint32_t>, Acceleration>(),
+                            [&n, mac](uint32_t pac) -> Acceleration {
+                              return withinBounds<uint32_t>(
+                                         n, "Profile Deceleration", 1, mac)
+                                  .match(
+                                      passAlong<invalid<uint32_t>,
+                                                Acceleration>{},
+                                      [&n, mac,
+                                       pac](uint32_t pdc) -> Acceleration {
+                                        return withinBounds<uint32_t>(
+                                                   n, "Quickstop Deceleration",
+                                                   1, mac)
+                                            .match(passAlong<invalid<uint32_t>,
+                                                             Acceleration>{},
+                                                   [mac, pac, pdc](uint32_t qd)
+                                                       -> Acceleration {
+                                                     return {MaxonParameterList{
+                                                         {"Max "
+                                                          "Acceleration",
+                                                          mac},
+                                                         {"Profile "
+                                                          "Acceleration",
+                                                          pac},
+                                                         {"Profile "
+                                                          "Deceleration",
+                                                          pdc},
+                                                         {"Quickstop "
+                                                          "Deceleration ",
+                                                          qd}}};
+                                                   });
+                                      });
+                            });
+                  });
 
     return true;
   };
@@ -170,8 +182,11 @@ template <> struct convert<Acceleration> {
 
 template <> struct convert<MotionProfileType> {
   static bool decode(Node const &node, MotionProfileType &mfe) {
-    int16_t value = node.as<int16_t>();
-    switch (value) {
+    if (!node["Motion Profile Type"]) {
+      mfe = missing<MotionProfileTypeValue>();
+      return true;
+    }
+    switch (node["Motion Profile Type"].as<int16_t>()) {
     case 0:
       mfe = MotionProfileTypeValue::LINEAR_RAMP_TRAPEZOIDAL_PROFILE;
       break;

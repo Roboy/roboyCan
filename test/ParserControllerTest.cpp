@@ -102,9 +102,9 @@ TEST(MissingProfileAcceleration, controller_yaml) {
 TEST(MaxFollowingError, controller_yaml) {
   auto const node = YAML::LoadFile("controller.yaml");
 
-  MaxFollowingError mfe = node["Control Mode Configuration"]
-                              ["Profile Position Mode Missing Profile Acc"]
-                                  .as<MaxFollowingError>();
+  MaxFollowingError mfe =
+      node["Control Mode Configuration"]["Profile Position Mode"]
+          .as<MaxFollowingError>();
 
   unsigned int isAcceleration = 12;
 
@@ -114,4 +114,22 @@ TEST(MaxFollowingError, controller_yaml) {
       [](MaxFollowingErrorValue) -> unsigned int { return 2; });
 
   EXPECT_EQ(isAcceleration, 2);
+}
+
+TEST(MotionProfileType, controller_yaml) {
+  auto const node = YAML::LoadFile("controller.yaml");
+
+  MotionProfileType mfe =
+      node["Control Mode Configuration"]["Profile Position Mode"]
+          .as<MotionProfileType>();
+
+  unsigned int isAcceleration = 12;
+
+  isAcceleration = mfe.match(
+      [](empty<MotionProfileTypeValue> mm) -> unsigned int { return 0; },
+      [](missing<MotionProfileTypeValue> mm) -> unsigned int { return 1; },
+      [](invalid<MotionProfileTypeValue> mm) -> unsigned int { return 2; },
+      [](MotionProfileTypeValue) -> unsigned int { return 3; });
+
+  EXPECT_EQ(isAcceleration, 3);
 }
