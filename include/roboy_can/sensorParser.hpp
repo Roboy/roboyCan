@@ -70,8 +70,7 @@ template <> struct convert<Sensor> {
 
     sensor =
         withinBounds<EposPulseNumberIncrementalEncoders>(
-            node["Pulse Number Incremental Encoder 1"].as<uint32_t>(), 16,
-            2500000)
+            node, "Pulse Number Incremental Encoder 1", 16, 2500000)
             .match(
                 passAlong<invalid<EposPulseNumberIncrementalEncoders>,
                           Sensor>{},

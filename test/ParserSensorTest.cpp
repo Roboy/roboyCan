@@ -109,20 +109,20 @@ TEST(InvalidPNIE_Value, sensor_yaml) {
   auto node = YAML::LoadFile("sensor.yaml");
   Sensor se = node["Standard Motor Configuration Invalid PNIE"].as<Sensor>();
 
-  unsigned int invEPNIE;
+  std::string invEPNIE;
 
   invEPNIE = se.match(
-      [](empty<Sensor>) -> unsigned int { return 0; },
-      [](missing<Sensor>) -> unsigned int { return 1; },
-      [](Sensor sen) -> unsigned int { return 2; },
-      [](invalid<EposPulseNumberIncrementalEncoders> inv) -> unsigned int {
-        return inv.outOfBoundInput;
+      [](empty<Sensor>) -> std::string { return ""; },
+      [](missing<Sensor>) -> std::string { return ""; },
+      [](Sensor sen) -> std::string { return ""; },
+      [](invalid<EposPulseNumberIncrementalEncoders> inv) -> std::string {
+        return inv.paramName;
       },
-      [](missing<EposPulseNumberIncrementalEncoders>) -> unsigned int {
-        return 4;
+      [](missing<EposPulseNumberIncrementalEncoders> inv) -> std::string {
+        return inv.paramName;
       },
-      [](invalid<EposPositionSensorType>) -> unsigned int { return 5; },
-      [](missing<EposPositionSensorType>) -> unsigned int { return 6; });
+      [](invalid<EposPositionSensorType>) -> std::string { return ""; },
+      [](missing<EposPositionSensorType>) -> std::string { return ""; });
 
-  EXPECT_EQ(invEPNIE, 2500001);
+  EXPECT_EQ(invEPNIE, "Pulse Number Incremental Encoder 1");
 }

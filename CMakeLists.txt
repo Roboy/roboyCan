@@ -76,6 +76,7 @@ set(TEST_SOURCE_FILES
   test/Main.cpp
   test/ParserNetworkTest.cpp
   test/ParserSensorTest.cpp
+  test/ParserControllerTest.cpp
 )
 catkin_add_gtest(unit_tests ${TEST_SOURCE_FILES})
 
@@ -86,3 +87,4 @@ target_link_libraries(unit_tests  roboy_can -ldl)
 configure_file(test/data/roboy.yaml ${CMAKE_CURRENT_BINARY_DIR}/roboy.yaml COPYONLY)
 configure_file(test/data/networks.yaml ${CMAKE_CURRENT_BINARY_DIR}/networks.yaml COPYONLY)
 configure_file(test/data/sensor.yaml ${CMAKE_CURRENT_BINARY_DIR}/sensor.yaml COPYONLY)
+configure_file(test/data/controller.yaml ${CMAKE_CURRENT_BINARY_DIR}/controller.yaml COPYONLY)

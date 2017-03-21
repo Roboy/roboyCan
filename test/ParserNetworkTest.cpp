@@ -215,9 +215,9 @@ TEST(duplicateNetwork, networks_yaml) {
       [](missing<std::string>) -> std::pair<unsigned int, std::string> {
         return std::make_pair(6, "");
       },
-      [](duplicate<NetworkConfig, std::string>)
+      [](duplicate<NetworkConfig, std::string> dn)
           -> std::pair<unsigned int, std::string> {
-        return std::make_pair(7, "Left");
+        return std::make_pair(7, dn.key);
       });
 
   EXPECT_EQ(isNetwork.first, 7);
