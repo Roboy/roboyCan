@@ -19,6 +19,7 @@ enum class EposPositionSensorType : uint16_t {
                              // Module
   SINUS_INC_ENCODER_2
 };
+
 using MaxonParameter = variant<int16_t, uint16_t, int32_t, uint32_t>;
 
 using MaxonParameterList = std::map<std::string, MaxonParameter>;
@@ -37,16 +38,13 @@ enum class KaCanOpenBaudrate : unsigned int {
   Baud1M
 };
 
-using PulseNumberIncrementalEncoder_1 =
-    variant<missing<EposPulseNumberIncrementalEncoders>,
-            invalid<EposPulseNumberIncrementalEncoders>,
-            EposPulseNumberIncrementalEncoders>;
-
-using PulseNumberIncrementalEncoder_2 = PulseNumberIncrementalEncoder_1;
-
 using PositionSensorType =
     variant<missing<EposPositionSensorType>, invalid<EposPositionSensorType>,
             EposPositionSensorType>;
+enum class MotionProfileTypeValue : int16_t {
+  LINEAR_RAMP_TRAPEZOIDAL_PROFILE,
+  SIN2_RAMP_SINUSOIDAL_PROFILE
+};
 
 class SensorConfig {
 public:
@@ -73,6 +71,22 @@ public:
   ProfilePositionModeConfig() = default;
   inline ProfilePositionModeConfig(MaxonParameterList &&pms) {
     parameters_ = std::move(pms);
+  };
+  inline ProfilePositionModeConfig(uint32_t &&mfev, MaxonParameterList &&plv,
+                                   MaxonParameterList &&vel,
+                                   MaxonParameterList &&acc,
+                                   MotionProfileTypeValue &&mpt) {
+    parameters_["Max Following Error"] = {std::move(mfev)};
+    for (auto &it : plv) {
+      parameters_[it.first] = it.second;
+    }
+    for (auto &it : vel) {
+      parameters_[it.first] = it.second;
+    }
+    for (auto &it : acc) {
+      parameters_[it.first] = it.second;
+    }
+    parameters_["Motion Profile Type"] = {static_cast<int16_t>(std::move(mpt))};
   };
 
   const std::string type = "Profile Position Mode";

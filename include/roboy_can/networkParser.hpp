@@ -44,7 +44,7 @@ auto growNetwork(Networks previous, YAML::const_iterator::value_type subnet)
               return {previous};
             });
       });
-}
+};
 
 namespace YAML {
 
@@ -112,4 +112,5 @@ template <> struct convert<Network> {
     return true;
   }
 };
+
 }; // end of namespace

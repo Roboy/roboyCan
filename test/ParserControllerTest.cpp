@@ -9,10 +9,9 @@ TEST(ParseMFEV, controller_yaml) {
           .as<MaxFollowingError>();
 
   unsigned int isMFE = 12;
-  isMFE = ctrl.match(
-      [](missing<MaxFollowingErrorValue>) -> unsigned int { return 0; },
-      [](invalid<MaxFollowingErrorValue>) -> unsigned int { return 1; },
-      [](MaxFollowingErrorValue) -> unsigned int { return 2; });
+  isMFE = ctrl.match([](missing<uint32_t>) -> unsigned int { return 0; },
+                     [](invalid<uint32_t>) -> unsigned int { return 1; },
+                     [](uint32_t) -> unsigned int { return 2; });
 
   EXPECT_EQ(isMFE, 2);
 }
@@ -23,8 +22,9 @@ TEST(ParsePL, controller_yaml) {
           .as<PositionLimit>();
 
   unsigned int isMFE = 12;
-  isMFE = ctrl.match([](missing<int32_t> mm) -> unsigned int { return 0; },
-                     [](PositionLimitValue) -> unsigned int { return 1; });
+  isMFE = ctrl.match(
+      [](missing<MaxonParameterList> mm) -> unsigned int { return 0; },
+      [](MaxonParameterList) -> unsigned int { return 1; });
 
   EXPECT_EQ(isMFE, 1);
 }
@@ -37,8 +37,8 @@ TEST(ParsePLValues, controller_yaml) {
 
   MaxonParameterList isMFE;
   isMFE = ctrl.match(
-      [](missing<int32_t> mm) -> MaxonParameterList { return {}; },
-      [](PositionLimitValue mm) -> MaxonParameterList { return mm; });
+      [](missing<MaxonParameterList> mm) -> MaxonParameterList { return {}; },
+      [](MaxonParameterList mm) -> MaxonParameterList { return mm; });
 
   EXPECT_EQ(isMFE["Min Position Limit"], static_cast<int32_t>(-2147483648));
   EXPECT_EQ(isMFE["Max Position Limit"], static_cast<int32_t>(2147483647));
@@ -188,10 +188,10 @@ TEST(MaxFollowingError, controller_yaml) {
 
   unsigned int isAcceleration = 12;
 
-  isAcceleration = mfe.match(
-      [](missing<MaxFollowingErrorValue> mm) -> unsigned int { return 0; },
-      [](invalid<MaxFollowingErrorValue> mm) -> unsigned int { return 1; },
-      [](MaxFollowingErrorValue) -> unsigned int { return 2; });
+  isAcceleration =
+      mfe.match([](missing<uint32_t> mm) -> unsigned int { return 0; },
+                [](invalid<uint32_t> mm) -> unsigned int { return 1; },
+                [](uint32_t) -> unsigned int { return 2; });
 
   EXPECT_EQ(isAcceleration, 2);
 }
@@ -236,4 +236,37 @@ TEST(MotionProfileTypeValue, controller_yaml) {
       [](MotionProfileTypeValue mm) -> MotionProfileTypeValue { return mm; });
 
   EXPECT_EQ(value, MotionProfileTypeValue::SIN2_RAMP_SINUSOIDAL_PROFILE);
+}
+
+TEST(Controllers, controller_yaml) {
+  auto const node = YAML::LoadFile("controller.yaml");
+  Controllers ctrls = node["Control Mode Configuration"].as<Controllers>();
+
+  ctrls.match(
+      [](empty<MaxonControllers>) -> void {
+        FAIL() << "empty<MaxonControllers>";
+      },
+      [](MaxonControllers mcs) -> void { EXPECT_EQ(mcs.size(), 1); },
+      [](empty<MaxonParameterList>) -> void {
+        FAIL() << "empty<MaxonParameterList>";
+      },
+      [](missing<MaxonParameterList>) -> void {
+        FAIL() << "missing<MaxonParameterList>";
+      },
+      [](missing<uint32_t>) -> void { FAIL() << "missing<uint32_t>"; },
+      [](invalid<uint32_t>) -> void { FAIL() << "invalid<uint32_t>"; },
+      [](missing<int32_t>) -> void { FAIL() << "missing<int32_t>"; },
+      [](invalid<int32_t>) -> void { FAIL() << "invalid<int32_t>"; },
+      [](empty<MotionProfileTypeValue>) -> void {
+        FAIL() << "missing<MotionProfileTypeValue>";
+      },
+      [](missing<MotionProfileTypeValue>) -> void {
+        FAIL() << "missing<MotionProfileTypeValue>";
+      },
+      [](invalid<MotionProfileTypeValue>) -> void {
+        FAIL() << "invalid<MotionProfileTypeValue>";
+      },
+      [](duplicate<MaxonControllerConfig, std::string>) -> void {
+        FAIL() << "duplicate<MaxonControllerConfig, std::string>)";
+      });
 }

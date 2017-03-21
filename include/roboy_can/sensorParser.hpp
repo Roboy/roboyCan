@@ -48,8 +48,9 @@ template <> struct convert<PositionSensorType> {
       sensor = invalid<EposPositionSensorType>{};
     }
     return true;
-  }
+  };
 };
+
 template <> struct convert<Sensor> {
   static bool decode(Node const &input_node, Sensor &sensor) {
     Node node;
