@@ -98,3 +98,20 @@ TEST(MissingProfileAcceleration, controller_yaml) {
 
   EXPECT_EQ(isAcceleration, std::string("Profile Acceleration"));
 }
+
+TEST(MaxFollowingError, controller_yaml) {
+  auto const node = YAML::LoadFile("controller.yaml");
+
+  MaxFollowingError mfe = node["Control Mode Configuration"]
+                              ["Profile Position Mode Missing Profile Acc"]
+                                  .as<MaxFollowingError>();
+
+  unsigned int isAcceleration = 12;
+
+  isAcceleration = mfe.match(
+      [](missing<MaxFollowingErrorValue> mm) -> unsigned int { return 0; },
+      [](invalid<MaxFollowingErrorValue> mm) -> unsigned int { return 1; },
+      [](MaxFollowingErrorValue) -> unsigned int { return 2; });
+
+  EXPECT_EQ(isAcceleration, 2);
+}
