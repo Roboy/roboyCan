@@ -29,6 +29,21 @@ TEST(ParsePL, controller_yaml) {
   EXPECT_EQ(isMFE, 1);
 }
 
+TEST(ParsePLValues, controller_yaml) {
+  auto const node = YAML::LoadFile("controller.yaml");
+  PositionLimit ctrl =
+      node["Control Mode Configuration"]["Profile Position Mode"]
+          .as<PositionLimit>();
+
+  MaxonParameterList isMFE;
+  isMFE = ctrl.match(
+      [](missing<int32_t> mm) -> MaxonParameterList { return {}; },
+      [](PositionLimitValue mm) -> MaxonParameterList { return mm; });
+
+  EXPECT_EQ(isMFE["Min Position Limit"], static_cast<int32_t>(-2147483648));
+  EXPECT_EQ(isMFE["Max Position Limit"], static_cast<int32_t>(2147483647));
+}
+
 TEST(ParseVelocity, controller_yaml) {
   auto const node = YAML::LoadFile("controller.yaml");
 
@@ -44,6 +59,23 @@ TEST(ParseVelocity, controller_yaml) {
                 [](MaxonParameterList) -> unsigned int { return 3; });
 
   EXPECT_EQ(isVelocity, 3);
+}
+TEST(ParseVelocityValues, controller_yaml) {
+  auto const node = YAML::LoadFile("controller.yaml");
+
+  Velocity vel = node["Control Mode Configuration"]["Profile Position Mode"]
+                     .as<Velocity>();
+
+  MaxonParameterList isVelocity;
+
+  isVelocity = vel.match(
+      [](missing<MaxProfileVelocity>) -> MaxonParameterList { return {}; },
+      [](missing<ProfileVelocity>) -> MaxonParameterList { return {}; },
+      [](invalid<ProfileVelocity>) -> MaxonParameterList { return {}; },
+      [](MaxonParameterList mm) -> MaxonParameterList { return mm; });
+
+  EXPECT_EQ(isVelocity["Max Profile Velocity"], static_cast<uint32_t>(8000));
+  EXPECT_EQ(isVelocity["Profile Velocity"], static_cast<uint32_t>(8000));
 }
 
 TEST(ParseAcceleration, controller_yaml) {

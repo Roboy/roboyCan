@@ -75,7 +75,6 @@ template <> struct convert<PositionLimit> {
          node["Position"]["Max Position Limit"].as<int32_t>()},
         {"Min Position Limit",
          node["Position"]["Min Position Limit"].as<int32_t>()}};
-    std::cout << "ok" << std::endl;
 
     return true;
   };
