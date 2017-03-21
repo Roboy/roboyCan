@@ -95,6 +95,53 @@ TEST(ParseAcceleration, controller_yaml) {
   EXPECT_EQ(isAcceleration, 3);
 }
 
+TEST(ParseAccelerationValue, controller_yaml) {
+  auto const node = YAML::LoadFile("controller.yaml");
+
+  Acceleration acc = node["Control Mode Configuration"]["Profile Position Mode"]
+                         .as<Acceleration>();
+
+  MaxonParameterList isAcceleration;
+
+  isAcceleration = acc.match(
+      [](empty<MaxonParameterList>) -> MaxonParameterList { return {}; },
+      [](missing<uint32_t> mm) -> MaxonParameterList { return {}; },
+      [](invalid<uint32_t> mm) -> MaxonParameterList { return {}; },
+      [](MaxonParameterList mm) -> MaxonParameterList { return mm; });
+
+  EXPECT_EQ(isAcceleration["Max Acceleration"],
+            MaxonParameter(static_cast<uint32_t>(40001)));
+  EXPECT_EQ(isAcceleration["Profile Acceleration"],
+            MaxonParameter(static_cast<uint32_t>(40000)));
+  EXPECT_EQ(isAcceleration["Profile Deceleration"],
+            MaxonParameter(static_cast<uint32_t>(40000)));
+  isAcceleration["Quickstop Deceleration"].match(
+      [](int16_t) -> void { FAIL() << "We shouldn't get here: int16_t"; },
+      [](uint16_t) -> void { FAIL() << "We shouldn't get here: uint16_t"; },
+      [](int32_t) -> void { FAIL() << "We shouldn't get here: int32_t"; },
+      [](uint32_t value) -> void { EXPECT_EQ(value, 10000); });
+}
+
+TEST(MaxonParameterTest, controller_yaml) {
+  MaxonParameter mx = uint32_t(10000);
+  mx.match(
+      [](int16_t) -> void { FAIL() << "We shouldn't get here: int16_t"; },
+      [](uint16_t) -> void { FAIL() << "We shouldn't get here: uint16_t"; },
+      [](int32_t) -> void { FAIL() << "We shouldn't get here: int32_t"; },
+      [](uint32_t value) -> void { EXPECT_EQ(value, 10000); });
+}
+
+TEST(MaxonParameterListTest, controller_yaml) {
+  MaxonParameter mx = uint32_t(10000);
+  MaxonParameterList mxl = {{"my", uint32_t(10000)}};
+
+  mxl["my"].match(
+      [](int16_t) -> void { FAIL() << "We shouldn't get here: int16_t"; },
+      [](uint16_t) -> void { FAIL() << "We shouldn't get here: uint16_t"; },
+      [](int32_t) -> void { FAIL() << "We shouldn't get here: int32_t"; },
+      [](uint32_t value) -> void { EXPECT_EQ(value, 10000); });
+}
+
 TEST(MissingMaxAcceleration, controller_yaml) {
   auto const node = YAML::LoadFile("controller.yaml");
 

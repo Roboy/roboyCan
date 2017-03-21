@@ -134,47 +134,47 @@ template <> struct convert<Acceleration> {
     //     "Max Acceleration", "Profile Acceleration", "Profile
     //     Deceleration",
     //     "Quickstop Deceleration"};
-    mfe = withinBounds<uint32_t>(n, "Max Acceleration", 0, 4294967295)
-              .match(
-                  passAlong<invalid<uint32_t>, Acceleration>{},
-                  [&n](uint32_t mac) -> Acceleration {
-                    return withinBounds<uint32_t>(n, "Profile Acceleration", 1,
-                                                  mac)
-                        .match(
-                            passAlong<invalid<uint32_t>, Acceleration>(),
-                            [&n, mac](uint32_t pac) -> Acceleration {
-                              return withinBounds<uint32_t>(
-                                         n, "Profile Deceleration", 1, mac)
-                                  .match(
-                                      passAlong<invalid<uint32_t>,
-                                                Acceleration>{},
-                                      [&n, mac,
-                                       pac](uint32_t pdc) -> Acceleration {
-                                        return withinBounds<uint32_t>(
-                                                   n, "Quickstop Deceleration",
-                                                   1, mac)
-                                            .match(passAlong<invalid<uint32_t>,
-                                                             Acceleration>{},
-                                                   [mac, pac, pdc](uint32_t qd)
-                                                       -> Acceleration {
-                                                     return {MaxonParameterList{
-                                                         {"Max "
-                                                          "Acceleration",
-                                                          mac},
-                                                         {"Profile "
-                                                          "Acceleration",
-                                                          pac},
-                                                         {"Profile "
-                                                          "Deceleration",
-                                                          pdc},
-                                                         {"Quickstop "
-                                                          "Deceleration ",
-                                                          qd}}};
-                                                   });
-                                      });
-                            });
-                  });
-
+    mfe =
+        withinBounds<uint32_t>(n, "Max Acceleration", 0, 4294967295)
+            .match(passAlong<invalid<uint32_t>, Acceleration>{},
+                   [&n](uint32_t mac) -> Acceleration {
+                     return withinBounds<uint32_t>(n, "Profile Acceleration", 1,
+                                                   mac)
+                         .match(
+                             passAlong<invalid<uint32_t>, Acceleration>(),
+                             [&n, &mac](uint32_t pac) -> Acceleration {
+                               return withinBounds<uint32_t>(
+                                          n, "Profile Deceleration", 1, mac)
+                                   .match(
+                                       passAlong<invalid<uint32_t>,
+                                                 Acceleration>{},
+                                       [&n, &mac,
+                                        &pac](uint32_t pdc) -> Acceleration {
+                                         return withinBounds<uint32_t>(
+                                                    n, "Quickstop Deceleration",
+                                                    1, mac)
+                                             .match(
+                                                 passAlong<invalid<uint32_t>,
+                                                           Acceleration>{},
+                                                 [&mac, &pac, &pdc](uint32_t qd)
+                                                     -> Acceleration {
+                                                   return MaxonParameterList{
+                                                       {"Max "
+                                                        "Acceleration",
+                                                        std::move(mac)},
+                                                       {"Profile "
+                                                        "Acceleration",
+                                                        std::move(pac)},
+                                                       {"Profile "
+                                                        "Deceleration",
+                                                        std::move(pdc)},
+                                                       {"Quickstop "
+                                                        "Deceleration",
+                                                        MaxonParameter{qd}}};
+                                                 });
+                                       });
+                             });
+                   });
     return true;
   };
 };
