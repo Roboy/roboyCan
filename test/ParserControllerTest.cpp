@@ -115,11 +115,13 @@ TEST(ParseAccelerationValue, controller_yaml) {
             MaxonParameter(static_cast<uint32_t>(40000)));
   EXPECT_EQ(isAcceleration["Profile Deceleration"],
             MaxonParameter(static_cast<uint32_t>(40000)));
-  isAcceleration["Quickstop Deceleration"].match(
-      [](int16_t) -> void { FAIL() << "We shouldn't get here: int16_t"; },
-      [](uint16_t) -> void { FAIL() << "We shouldn't get here: uint16_t"; },
-      [](int32_t) -> void { FAIL() << "We shouldn't get here: int32_t"; },
-      [](uint32_t value) -> void { EXPECT_EQ(value, 10000); });
+
+  isAcceleration.at("Quickstop Deceleration")
+      .match(
+          [](int16_t) -> void { FAIL() << "We shouldn't get here: int16_t"; },
+          [](uint16_t) -> void { FAIL() << "We shouldn't get here: uint16_t"; },
+          [](int32_t) -> void { FAIL() << "We shouldn't get here: int32_t"; },
+          [](uint32_t value) -> void { EXPECT_EQ(value, 10000); });
 }
 
 TEST(MaxonParameterTest, controller_yaml) {
@@ -132,7 +134,6 @@ TEST(MaxonParameterTest, controller_yaml) {
 }
 
 TEST(MaxonParameterListTest, controller_yaml) {
-  MaxonParameter mx = uint32_t(10000);
   MaxonParameterList mxl = {{"my", uint32_t(10000)}};
 
   mxl["my"].match(
@@ -211,4 +212,28 @@ TEST(MotionProfileType, controller_yaml) {
       [](MotionProfileTypeValue) -> unsigned int { return 3; });
 
   EXPECT_EQ(isAcceleration, 3);
+}
+
+TEST(MotionProfileTypeValue, controller_yaml) {
+  auto const node = YAML::LoadFile("controller.yaml");
+
+  MotionProfileType mfe =
+      node["Control Mode Configuration"]["Profile Position Mode"]
+          .as<MotionProfileType>();
+
+  MotionProfileTypeValue value;
+
+  value = mfe.match(
+      [](empty<MotionProfileTypeValue>) -> MotionProfileTypeValue {
+        return {};
+      },
+      [](missing<MotionProfileTypeValue>) -> MotionProfileTypeValue {
+        return {};
+      },
+      [](invalid<MotionProfileTypeValue>) -> MotionProfileTypeValue {
+        return {};
+      },
+      [](MotionProfileTypeValue mm) -> MotionProfileTypeValue { return mm; });
+
+  EXPECT_EQ(value, MotionProfileTypeValue::SIN2_RAMP_SINUSOIDAL_PROFILE);
 }
