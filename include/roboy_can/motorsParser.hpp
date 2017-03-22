@@ -15,12 +15,14 @@ auto growMotorNames(motorNames previous,
                     YAML::const_iterator::value_type subnet)
     -> motorNamesVariant {
   std::string networkName = subnet.first.as<std::string>();
-  motorNames names;
+
   for (auto &mname : subnet.second) {
-    names[mname.second["id"].as<std::string>()] =
+    previous[mname.second["id"].as<std::string>()] =
         std::make_pair(mname.first.as<unsigned int>(), networkName);
   }
+  return {previous};
 };
+
 namespace YAML {
 template <> struct convert<motorNamesVariant> {
   static bool decode(Node const &node, motorNamesVariant &names) {
