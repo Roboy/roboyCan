@@ -90,3 +90,4 @@ configure_file(test/data/roboy.yaml ${CMAKE_CURRENT_BINARY_DIR}/roboy.yaml COPYO
 configure_file(test/data/networks.yaml ${CMAKE_CURRENT_BINARY_DIR}/networks.yaml COPYONLY)
 configure_file(test/data/sensor.yaml ${CMAKE_CURRENT_BINARY_DIR}/sensor.yaml COPYONLY)
 configure_file(test/data/controller.yaml ${CMAKE_CURRENT_BINARY_DIR}/controller.yaml COPYONLY)
+configure_file(test/data/roboy_duplicate_motor.yaml ${CMAKE_CURRENT_BINARY_DIR}/roboy_duplicate_motor.yaml COPYONLY)

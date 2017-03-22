@@ -1,0 +1,29 @@
+Maxon: #User Configurable Name
+  Motors: #Fixed Tag
+    Left:
+      1:
+        id: BriskBugs # Human readable, user configurable name
+      31:
+        id: SoberHunters
+      32:
+        id: SurelyFlowers
+      33:
+        id: ColdDogs
+      34:
+        id: ChosenPlants
+      34:
+        id: DoubleFlatToad
+
+    Right:
+      35:
+        id: JumpyLifeforms
+      36:
+        id: BeautifulPriests
+      37:
+        id: FunnyDonkeys
+      41:
+        id: GoodLemurs
+      39:
+        id: AstonishingHedgehogs
+      42:
+        id: CautiousFish
