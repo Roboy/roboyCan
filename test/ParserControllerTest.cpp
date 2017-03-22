@@ -257,7 +257,7 @@ TEST(Controllers, controller_yaml) {
       [](empty<MaxonControllers>) -> void {
         FAIL() << "empty<MaxonControllers>";
       },
-      [](MaxonControllers mcs) -> void { EXPECT_EQ(mcs.size(), 1); },
+      [](MaxonControllers mcs) -> void { EXPECT_EQ(mcs.size(), 2); },
       [](empty<MaxonParameterList>) -> void {
         FAIL() << "empty<MaxonParameterList>";
       },
@@ -313,7 +313,6 @@ TEST(ControllersValues, controller_yaml) {
               EXPECT_EQ(config.getParameter("Motion Profile Type"),
                         static_cast<int16_t>(1));
             });
-
       },
       [](empty<MaxonParameterList>) -> void {
         FAIL() << "empty<MaxonParameterList>";
@@ -322,6 +321,42 @@ TEST(ControllersValues, controller_yaml) {
         FAIL() << "missing<MaxonParameterList>";
       },
       [](missing<uint32_t>) -> void { FAIL() << "missing<uint32_t>"; },
+      [](invalid<uint32_t>) -> void { FAIL() << "invalid<uint32_t>"; },
+      [](missing<int32_t>) -> void { FAIL() << "missing<int32_t>"; },
+      [](invalid<int32_t>) -> void { FAIL() << "invalid<int32_t>"; },
+      [](empty<MotionProfileTypeValue>) -> void {
+        FAIL() << "missing<MotionProfileTypeValue>";
+      },
+      [](missing<MotionProfileTypeValue>) -> void {
+        FAIL() << "missing<MotionProfileTypeValue>";
+      },
+      [](invalid<MotionProfileTypeValue>) -> void {
+        FAIL() << "invalid<MotionProfileTypeValue>";
+      },
+      [](duplicate<MaxonControllerConfig, std::string>) -> void {
+        FAIL() << "duplicate<MaxonControllerConfig, std::string>)";
+      });
+}
+
+TEST(ControllersMissingMaxAcc, controller_yaml) {
+  auto const node = YAML::LoadFile("controller.yaml");
+  Controllers ctrls =
+      node["Broken Control Mode Configuration"].as<Controllers>();
+  ctrls.match(
+      [](empty<MaxonControllers>) -> void {
+        FAIL() << "empty<MaxonControllers>";
+      },
+      [](MaxonControllers mcs) -> void { FAIL() << "MaxonControllers mcs"; },
+      [](empty<MaxonParameterList>) -> void {
+        FAIL() << "empty<MaxonParameterList>";
+      },
+      [](missing<MaxonParameterList>) -> void {
+        FAIL() << "missing<MaxonParameterList>";
+      },
+      [](missing<uint32_t> value) -> void {
+        SUCCEED();
+        // EXPECT_EQ(value.paramName, "Max Acceleration");
+      },
       [](invalid<uint32_t>) -> void { FAIL() << "invalid<uint32_t>"; },
       [](missing<int32_t>) -> void { FAIL() << "missing<int32_t>"; },
       [](invalid<int32_t>) -> void { FAIL() << "invalid<int32_t>"; },
