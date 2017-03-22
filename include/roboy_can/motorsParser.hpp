@@ -7,18 +7,22 @@
 #include <iostream>
 #include <numeric>
 
-using motorNames = std::map<std::string, std::pair<unsigned int, std::string>>;
+struct CanIdNetworktuple {
+  unsigned int id;
+  std::string network;
+};
+using motorNames = std::map<std::string, CanIdNetworktuple>;
 using motorNamesVariant =
     variant<empty<motorNames>, motorNames, missing<motorNames>>;
 
-auto growMotorNames(motorNames previous,
-                    YAML::const_iterator::value_type subnet)
+inline auto growMotorNames(motorNames previous,
+                           YAML::const_iterator::value_type subnet)
     -> motorNamesVariant {
   std::string networkName = subnet.first.as<std::string>();
 
   for (auto &mname : subnet.second) {
-    previous[mname.second["id"].as<std::string>()] =
-        std::make_pair(mname.first.as<unsigned int>(), networkName);
+    previous[mname.second["id"].as<std::string>()] = {
+        mname.first.as<unsigned int>(), networkName};
   }
   return {previous};
 };
