@@ -3,6 +3,8 @@
 #include "roboy_can/MaxonConfig.hpp"
 #include "roboy_can/Types.hpp"
 #include "roboy_can/errorHandling.hpp"
+#include "roboy_can/networkParser.hpp"
+#include "roboy_can/sensorParser.hpp"
 #include "yaml-cpp/yaml.h"
 #include <iostream>
 #include <numeric>
@@ -15,6 +17,8 @@ using motorNames = std::map<std::string, CanIdNetworktuple>;
 using motorNamesVariant =
     variant<empty<motorNames>, motorNames, missing<motorNames>,
             duplicate<CanIdNetworktuple, std::string>>;
+using MotorConfigVariant = variant<empty<MotorConfig>, MotorConfig>;
+// todo: Add MotorConfigvariant options
 
 inline auto growMotorNames(motorNames previous,
                            YAML::const_iterator::value_type subnet)
@@ -58,6 +62,13 @@ template <> struct convert<motorNamesVariant> {
                         motorNamesVariant>{});
         });
     return true;
+  };
+};
+
+template <> struct convert<MotorConfigVariant> {
+  static bool decode(Node const &node, MotorConfigVariant &motors) {
+    Network nw = node["Network"].as<Network>();
+    Sensor se = node["Standard Motor Configuration"].as<Sensor>();
   };
 };
 }; // end of namespace

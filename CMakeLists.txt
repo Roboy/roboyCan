@@ -42,7 +42,8 @@ include_directories(
  add_library(roboy_can
 src/networkParser.cpp
 src/sensorParser.cpp
-src/motorParsers.cpp
+src/motorParser.cpp
+src/mainParser.cpp
    #src/roboy_can.cpp
   # src/Motors.cpp
  )

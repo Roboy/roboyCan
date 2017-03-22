@@ -140,7 +140,6 @@ template <> struct convert<Controllers> {
 using Maxons = ConversionTypes<MaxonConfig>;
 
 template <> struct convert<Maxons> {
-  // todo: check if I can return something other than bool...
   static bool decode(Node const &node, Maxons &rhs) {
 
     Networks networks;
