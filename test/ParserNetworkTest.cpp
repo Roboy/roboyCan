@@ -4,7 +4,7 @@
 
 TEST(networks_yaml, ParseNetwork) {
   auto node = YAML::LoadFile("networks.yaml");
-  Network nw = node["Network"].as<Network>();
+  NetworkVariant nw = node["Network"].as<NetworkVariant>();
 
   Networks networks;
 
@@ -25,7 +25,7 @@ TEST(networks_yaml, ParseNetwork) {
 
 TEST(networks_yaml, NetworkSize) {
   auto node = YAML::LoadFile("networks.yaml");
-  Network nw = node["Network"].as<Network>();
+  NetworkVariant nw = node["Network"].as<NetworkVariant>();
 
   Networks networks;
 
@@ -44,7 +44,7 @@ TEST(networks_yaml, NetworkSize) {
 }
 TEST(networks_yaml, Network_eft) {
   auto node = YAML::LoadFile("networks.yaml");
-  Network nw = node["Network"].as<Network>();
+  NetworkVariant nw = node["Network"].as<NetworkVariant>();
 
   unsigned int nwsize = 7;
 
@@ -70,7 +70,7 @@ TEST(networks_yaml, Network_eft) {
 
 TEST(networks_yaml, missing_Baudrate) {
   auto node = YAML::LoadFile("networks.yaml");
-  Network nw = node["Network_missing_baudrate"].as<Network>();
+  NetworkVariant nw = node["Network_missing_baudrate"].as<NetworkVariant>();
 
   Networks networks;
 
@@ -91,7 +91,7 @@ TEST(networks_yaml, missing_Baudrate) {
 
 TEST(networks_yaml, wrong_Baudrate) {
   auto node = YAML::LoadFile("networks.yaml");
-  Network nw = node["Network_wrong_baudrate"].as<Network>();
+  NetworkVariant nw = node["Network_wrong_baudrate"].as<NetworkVariant>();
 
   Networks networks;
 
@@ -112,7 +112,7 @@ TEST(networks_yaml, wrong_Baudrate) {
 
 TEST(networks_yaml, missing_UsbOption) {
   auto node = YAML::LoadFile("networks.yaml");
-  Network nw = node["Network_missing_UsbOption"].as<Network>();
+  NetworkVariant nw = node["Network_missing_UsbOption"].as<NetworkVariant>();
 
   Networks networks;
 
@@ -133,7 +133,7 @@ TEST(networks_yaml, missing_UsbOption) {
 
 TEST(networks_yaml, wrong_UsbOption) {
   auto node = YAML::LoadFile("networks.yaml");
-  Network nw = node["Network_wrong_UsbOption"].as<Network>();
+  NetworkVariant nw = node["Network_wrong_UsbOption"].as<NetworkVariant>();
 
   Networks networks;
 
@@ -153,7 +153,7 @@ TEST(networks_yaml, wrong_UsbOption) {
 }
 TEST(networks_yaml, missing_USBSerial_node) {
   auto node = YAML::LoadFile("networks.yaml");
-  Network nw = node["Network_missing_serial"].as<Network>();
+  NetworkVariant nw = node["Network_missing_serial"].as<NetworkVariant>();
 
   Networks networks;
 
@@ -176,7 +176,7 @@ TEST(networks_yaml, empty_USBSerial_node) {
   auto node = YAML::LoadFile("networks.yaml");
   EXPECT_THROW(
       try {
-        Network nw = node["Network_empty_serial"].as<Network>();
+        NetworkVariant nw = node["Network_empty_serial"].as<NetworkVariant>();
       } catch (const YAML::BadConversion &e) {
         EXPECT_STREQ(std::string("bad conversion").c_str(),
                      std::string(e.msg).c_str());
@@ -187,7 +187,7 @@ TEST(networks_yaml, empty_USBSerial_node) {
 
 TEST(networks_yaml, duplicateNetwork) {
   auto node = YAML::LoadFile("networks.yaml");
-  Network nw = node["Network_duplicate_network"].as<Network>();
+  NetworkVariant nw = node["Network_duplicate_network"].as<NetworkVariant>();
 
   Networks networks;
 
@@ -226,7 +226,7 @@ TEST(networks_yaml, duplicateNetwork) {
 
 TEST(networks_yaml, duplicateDriver) {
   auto node = YAML::LoadFile("networks.yaml");
-  Network nw = node["Network_duplicate_driver"].as<Network>();
+  NetworkVariant nw = node["Network_duplicate_driver"].as<NetworkVariant>();
 
   Networks networks;
 

@@ -2,6 +2,7 @@
 
 #include "roboy_can/MaxonConfig.hpp"
 #include "roboy_can/Types.hpp"
+#include "roboy_can/controllerParser.hpp"
 #include "roboy_can/errorHandling.hpp"
 #include "roboy_can/networkParser.hpp"
 #include "roboy_can/sensorParser.hpp"
@@ -64,11 +65,85 @@ template <> struct convert<motorNamesVariant> {
     return true;
   };
 };
+using MaxonConfigVariant = variant<empty<MaxonConfig>, MaxonConfig>;
 
-template <> struct convert<MotorConfigVariant> {
-  static bool decode(Node const &node, MotorConfigVariant &motors) {
-    Network nw = node["Network"].as<Network>();
-    Sensor se = node["Standard Motor Configuration"].as<Sensor>();
-  };
-};
+// using MCV = MaxonConfigVariant;
+// template <> struct convert<MaxonConfigVariant> {
+//   static bool decode(Node const &node, MCV &motors) {
+//     NetworkVariant nw = node["Network"].as<NetworkVariant>().match(
+//         [](empty<Networks> n) -> MCV { passAlong<, MCV>{}; },
+//         [&node](Networks nn) -> MCV { // next level
+//           return node["Standard Motor Configuration"].as<Sensor>().match(
+//               [](empty<SensorConfig>) -> MCV { passAlong<, MCV>{}; },
+//               [](missing<MCV>) -> MCV { passAlong<, MCV>{}; },
+//               [&node, &nn](MCV sc) -> MCV { // next level
+//                 return node["Control Mode Configuration"]
+//                     .as<Controllers>()
+//                     .match(
+//                         [](empty<MaxonControllers>) -> MCV {
+//                           passAlong<, MCV>{};
+//                         },
+//                         [&node, &nn, &sc](MaxonControllers mcs) -> MCV {
+//                           return node["Maxon"].as<motorNamesVariant>().match(
+//                               [](empty<motorNames>) -> MCV {
+//                                 passAlong<, MCV>{};
+//                               },
+//                               [&node, &nn, &sc, &mcs](motorNames mn) -> MCV {
+//                                 MAGIC !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//                               },
+//                               [](missing<motorNames>) -> MCV {
+//                                 passAlong<, MCV>{};
+//                               },
+//                               [](duplicate<CanIdNetworktuple, std::string>)
+//                                   -> MCV { passAlong<, MCV>{}; });
+//                         },
+//                         [](empty<MaxonParameterList>) -> MCV {
+//                           passAlong<, MCV>{};
+//                         },
+//                         [](missing<MaxonParameterList>) -> MCV {
+//                           passAlong<, MCV>{};
+//                         },
+//                         [](missing<uint32_t>) -> MCV { passAlong<, MCV>{}; },
+//                         [](invalid<uint32_t>) -> MCV { passAlong<, MCV>{}; },
+//                         [](missing<int32_t>) -> MCV { passAlong<, MCV>{}; },
+//                         [](invalid<int32_t>) -> MCV { passAlong<, MCV>{}; },
+//                         [](empty<MotionProfileTypeValue>) -> MCV {
+//                           passAlong<, MCV>{};
+//                         },
+//                         [](missing<MotionProfileTypeValue>) -> MCV {
+//                           passAlong<, MCV>{};
+//                         },
+//                         [](invalid<MotionProfileTypeValue>) -> MCV {
+//                           passAlong<, MCV>{};
+//                         },
+//                         [](duplicate<MaxonControllerConfig, std::string>)
+//                             -> MCV { passAlong<, MCV>{}; });
+//               },
+//               [](invalid<EposPulseNumberIncrementalEncoders>) -> MCV {
+//                 passAlong<, MCV>{};
+//               },
+//               [](missing<EposPulseNumberIncrementalEncoders>) -> MCV {
+//                 passAlong<, MCV>{};
+//               },
+//               [](invalid<EposPositionSensorType>) -> MCV {
+//                 passAlong<, MCV>{};
+//               },
+//               [](missing<EposPositionSensorType>) -> MCV {
+//                 passAlong<, MCV>{};
+//               },
+//               [](invalid<KaCanOpenUsbOptions>) -> MCV { passAlong<, MCV>{};
+//               });
+//         },
+//         [](missing<KaCanOpenBaudrate>) -> MCV { passAlong<, MCV>{}; },
+//         [](invalid<KaCanOpenBaudrate>) -> MCV { passAlong<, MCV>{}; },
+//         [](missing<KaCanOpenUsbOptions>) -> MCV { passAlong<, MCV>{}; },
+//         [](invalid<KaCanOpenUsbOptions>) -> MCV { passAlong<, MCV>{}; },
+//         [](missing<std::string>) -> MCV { passAlong<, MCV>{}; },
+//         [](duplicate<NetworkConfig, std::string>) -> MCV {
+//           passAlong<, MCV>{};
+//         });
+//
+//     motorNamesVariant mnv = node["Maxon"].as<motorNamesVariant>();
+//   };
+// };
 }; // end of namespace

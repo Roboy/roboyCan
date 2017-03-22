@@ -9,14 +9,15 @@
 using Baudrate = variant<invalid<KaCanOpenBaudrate>, KaCanOpenBaudrate>;
 using UsbOptions = variant<invalid<KaCanOpenUsbOptions>, KaCanOpenUsbOptions>;
 
-using Network =
+using NetworkVariant =
     variant<empty<Networks>, Networks, missing<KaCanOpenBaudrate>,
             invalid<KaCanOpenBaudrate>, missing<KaCanOpenUsbOptions>,
             invalid<KaCanOpenUsbOptions>, missing<std::string>,
             duplicate<NetworkConfig, std::string>>;
 
 inline auto growNetwork(Networks previous,
-                        YAML::const_iterator::value_type subnet) -> Network {
+                        YAML::const_iterator::value_type subnet)
+    -> NetworkVariant {
   if (!subnet.second["Baudrate"]) {
     return missing<KaCanOpenBaudrate>{};
   }
@@ -28,12 +29,12 @@ inline auto growNetwork(Networks previous,
   }
 
   return subnet.second["Baudrate"].as<Baudrate>().match(
-      passAlong<invalid<KaCanOpenBaudrate>, Network>{},
-      [&subnet, &previous](KaCanOpenBaudrate baudr) -> Network {
+      passAlong<invalid<KaCanOpenBaudrate>, NetworkVariant>{},
+      [&subnet, &previous](KaCanOpenBaudrate baudr) -> NetworkVariant {
         return subnet.second["Driver"].as<UsbOptions>().match(
-            passAlong<invalid<KaCanOpenUsbOptions>, Network>{},
+            passAlong<invalid<KaCanOpenUsbOptions>, NetworkVariant>{},
             [&previous, &subnet,
-             &baudr](KaCanOpenUsbOptions usbopt) -> Network {
+             &baudr](KaCanOpenUsbOptions usbopt) -> NetworkVariant {
               auto serial = subnet.second["USB Serial"].as<std::string>();
               auto key = subnet.first.as<std::string>();
               if (previous
@@ -90,24 +91,25 @@ template <> struct convert<UsbOptions> {
   }
 };
 
-template <> struct convert<Network> {
-  static bool decode(Node const &node, Network &network) {
+template <> struct convert<NetworkVariant> {
+  static bool decode(Node const &node, NetworkVariant &network) {
     network = std::accumulate(
-        node.begin(), node.end(), Network{},
-        [](Network nw, YAML::const_iterator::value_type subnet) {
+        node.begin(), node.end(), NetworkVariant{},
+        [](NetworkVariant nw, YAML::const_iterator::value_type subnet) {
           return nw.match(
-              [&subnet](empty<Networks>) -> Network {
+              [&subnet](empty<Networks>) -> NetworkVariant {
                 return growNetwork(Networks{}, subnet);
               },
-              [&subnet](Networks previous) -> Network {
+              [&subnet](Networks previous) -> NetworkVariant {
                 return growNetwork(previous, subnet);
               },
-              passAlong<missing<KaCanOpenBaudrate>, Network>{},
-              passAlong<invalid<KaCanOpenBaudrate>, Network>{},
-              passAlong<missing<KaCanOpenUsbOptions>, Network>{},
-              passAlong<invalid<KaCanOpenUsbOptions>, Network>{},
-              passAlong<missing<std::string>, Network>{},
-              passAlong<duplicate<NetworkConfig, std::string>, Network>{});
+              passAlong<missing<KaCanOpenBaudrate>, NetworkVariant>{},
+              passAlong<invalid<KaCanOpenBaudrate>, NetworkVariant>{},
+              passAlong<missing<KaCanOpenUsbOptions>, NetworkVariant>{},
+              passAlong<invalid<KaCanOpenUsbOptions>, NetworkVariant>{},
+              passAlong<missing<std::string>, NetworkVariant>{},
+              passAlong<duplicate<NetworkConfig, std::string>,
+                        NetworkVariant>{});
         });
     return true;
   }
