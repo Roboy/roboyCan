@@ -47,62 +47,53 @@ auto growController(MaxonControllers previous,
     return missing<MaxonParameterList>{"Acceleration"};
   };
 
-  return subnet.second["Max Following Error"].as<MaxFollowingError>().match(
+  return subnet.second.as<MaxFollowingError>().match(
       passAlong<missing<uint32_t>, Controllers>{},
       passAlong<invalid<uint32_t>, Controllers>{},
       [&subnet, &previous](uint32_t mfev) -> Controllers {
 
-        return subnet.second["Position"].as<PositionLimit>().match(
+        return subnet.second.as<PositionLimit>().match(
             passAlong<missing<MaxonParameterList>, Controllers>{},
             [&subnet, &previous, &mfev](MaxonParameterList plv) -> Controllers {
 
-              return subnet.second["Velocity"].as<Velocity>().match(
+              return subnet.second.as<Velocity>().match(
                   passAlong<missing<uint32_t>, Controllers>{},
                   passAlong<invalid<uint32_t>, Controllers>{},
                   [&subnet, &previous, &mfev,
                    &plv](MaxonParameterList vel) -> Controllers {
 
-                    return subnet.second["Acceleration"]
-                        .as<Acceleration>()
-                        .match(
-                            passAlong<empty<MaxonParameterList>, Controllers>(),
-                            passAlong<missing<uint32_t>, Controllers>{},
-                            passAlong<invalid<uint32_t>, Controllers>{},
-                            [&subnet, &previous, &mfev, &plv,
-                             &vel](MaxonParameterList acc) -> Controllers {
+                    return subnet.second.as<Acceleration>().match(
+                        passAlong<empty<MaxonParameterList>, Controllers>(),
+                        passAlong<missing<uint32_t>, Controllers>{},
+                        passAlong<invalid<uint32_t>, Controllers>{},
+                        [&subnet, &previous, &mfev, &plv,
+                         &vel](MaxonParameterList acc) -> Controllers {
 
-                              return subnet.second["Motion Profile Type"]
-                                  .as<MotionProfileType>()
-                                  .match(
-                                      passAlong<empty<MotionProfileTypeValue>,
-                                                Controllers>(),
-                                      passAlong<missing<MotionProfileTypeValue>,
-                                                Controllers>(),
-                                      passAlong<invalid<MotionProfileTypeValue>,
-                                                Controllers>(),
-                                      [&subnet, &previous, &mfev, &plv, &vel,
-                                       &acc](MotionProfileTypeValue mpt)
-                                          -> Controllers {
+                          return subnet.second.as<MotionProfileType>().match(
+                              passAlong<empty<MotionProfileTypeValue>,
+                                        Controllers>(),
+                              passAlong<missing<MotionProfileTypeValue>,
+                                        Controllers>(),
+                              passAlong<invalid<MotionProfileTypeValue>,
+                                        Controllers>(),
+                              [&subnet, &previous, &mfev, &plv, &vel, &acc](
+                                  MotionProfileTypeValue mpt) -> Controllers {
 
-                                        auto key =
-                                            subnet.first.as<std::string>();
-                                        if (previous
-                                                .emplace(
-                                                    key,
-                                                    ProfilePositionModeConfig(
-                                                        std::move(mfev),
-                                                        std::move(plv),
-                                                        std::move(vel),
-                                                        std::move(acc),
-                                                        std::move(mpt)))
-                                                .second == false) {
-                                          return duplicate<
-                                              MaxonControllerConfig,
-                                              std::string>{key};
-                                        }
-                                        return {previous};
-                                      });
-                            });
+                                auto key = subnet.first.as<std::string>();
+                                if (previous
+                                        .emplace(key, ProfilePositionModeConfig(
+                                                          std::move(mfev),
+                                                          std::move(plv),
+                                                          std::move(vel),
+                                                          std::move(acc),
+                                                          std::move(mpt)))
+                                        .second == false) {
+                                  return duplicate<MaxonControllerConfig,
+                                                   std::string>{key};
+                                }
+                                return {previous};
+                              });
+                        });
                   });
             });
       });
@@ -111,10 +102,13 @@ auto growController(MaxonControllers previous,
 namespace YAML {
 template <> struct convert<MaxFollowingError> {
   static bool decode(Node const &node, MaxFollowingError &mfe) {
+
     if (!node["Max Following Error"]) {
+
       mfe = missing<uint32_t>{std::string("MaxFollowingError")};
       return true;
     }
+
     mfe = withinBounds<uint32_t>(node, "Max Following Error", 0, 4294967295)
               .match(passAlong<invalid<uint32_t>, MaxFollowingError>{},
                      passAlong<uint32_t, MaxFollowingError>{});
@@ -124,6 +118,7 @@ template <> struct convert<MaxFollowingError> {
 
 template <> struct convert<PositionLimit> {
   static bool decode(Node const &node, PositionLimit &mfe) {
+
     if (!node["Position"]["Max Position Limit"]) {
       mfe = missing<MaxonParameterList>{"Max Position Limit"};
       return true;
@@ -267,11 +262,14 @@ template <> struct convert<Controllers> {
     controllers = std::accumulate(
         node.begin(), node.end(), Controllers{},
         [](Controllers ctrl, YAML::const_iterator::value_type subnet) {
+
           return ctrl.match(
               [&subnet](empty<MaxonControllers>) -> Controllers {
                 return growController(MaxonControllers{}, subnet);
+
               },
               [&subnet](MaxonControllers previous) -> Controllers {
+
                 return growController(previous, subnet);
               },
               passAlong<empty<MaxonParameterList>, Controllers>{},

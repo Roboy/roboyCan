@@ -15,6 +15,18 @@ TEST(ParseMFEV, controller_yaml) {
 
   EXPECT_EQ(isMFE, 2);
 }
+
+TEST(MFEVvalue, controller_yaml) {
+  auto const node = YAML::LoadFile("controller.yaml");
+  MaxFollowingError ctrl =
+      node["Control Mode Configuration"]["Profile Position Mode"]
+          .as<MaxFollowingError>();
+
+  ctrl.match([](missing<uint32_t>) -> void { FAIL() << "missing<uint32_t>"; },
+             [](invalid<uint32_t>) -> void { "invalid<uint32_t>"; },
+             [](uint32_t mm) -> void { EXPECT_EQ(mm, 5000); });
+}
+
 TEST(ParsePL, controller_yaml) {
   auto const node = YAML::LoadFile("controller.yaml");
   PositionLimit ctrl =
@@ -146,7 +158,7 @@ TEST(MaxonParameterListTest, controller_yaml) {
 TEST(MissingMaxAcceleration, controller_yaml) {
   auto const node = YAML::LoadFile("controller.yaml");
 
-  Acceleration acc = node["Control Mode Configuration"]
+  Acceleration acc = node["Broken Control Mode Configuration"]
                          ["Profile Position Mode Missing Max Acc"]
                              .as<Acceleration>();
 
@@ -164,7 +176,7 @@ TEST(MissingMaxAcceleration, controller_yaml) {
 TEST(MissingProfileAcceleration, controller_yaml) {
   auto const node = YAML::LoadFile("controller.yaml");
 
-  Acceleration acc = node["Control Mode Configuration"]
+  Acceleration acc = node["Broken Control Mode Configuration"]
                          ["Profile Position Mode Missing Profile Acc"]
                              .as<Acceleration>();
 
@@ -241,7 +253,6 @@ TEST(MotionProfileTypeValue, controller_yaml) {
 TEST(Controllers, controller_yaml) {
   auto const node = YAML::LoadFile("controller.yaml");
   Controllers ctrls = node["Control Mode Configuration"].as<Controllers>();
-
   ctrls.match(
       [](empty<MaxonControllers>) -> void {
         FAIL() << "empty<MaxonControllers>";

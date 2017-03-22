@@ -13,7 +13,8 @@ Control Mode Configuration:
       Profile Deceleration: 40000
       Quickstop Deceleration: 10000 # Leave at default values
     Motion Profile Type: 1
-
+    
+Broken Control Mode Configuration:
   Profile Position Mode Missing Max Acc:
     Max Following Error: 5000
     Position:
