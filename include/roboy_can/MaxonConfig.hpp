@@ -59,7 +59,7 @@ public:
   inline MaxonParameterList getParameterList(void) { return parameters_; };
 
   inline MaxonParameter getParameter(std::string name) {
-    return parameters_[name];
+    return parameters_.at(name);
   };
 
 private:

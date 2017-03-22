@@ -281,3 +281,60 @@ TEST(Controllers, controller_yaml) {
         FAIL() << "duplicate<MaxonControllerConfig, std::string>)";
       });
 }
+
+TEST(ControllersValues, controller_yaml) {
+  auto const node = YAML::LoadFile("controller.yaml");
+  Controllers ctrls = node["Control Mode Configuration"].as<Controllers>();
+  ctrls.match(
+      [](empty<MaxonControllers>) -> void {
+        FAIL() << "empty<MaxonControllers>";
+      },
+      [](MaxonControllers mcs) -> void {
+        mcs.at("Profile Position Mode")
+            .match([](ProfilePositionModeConfig config) -> void {
+              EXPECT_EQ(config.getParameter("Max Following Error"),
+                        static_cast<uint32_t>(5000));
+              EXPECT_EQ(config.getParameter("Min Position Limit"),
+                        static_cast<int32_t>(-2147483648));
+              EXPECT_EQ(config.getParameter("Max Position Limit"),
+                        static_cast<int32_t>(2147483647));
+              EXPECT_EQ(config.getParameter("Max Profile Velocity"),
+                        static_cast<uint32_t>(8000));
+              EXPECT_EQ(config.getParameter("Profile Velocity"),
+                        static_cast<uint32_t>(8000));
+              EXPECT_EQ(config.getParameter("Max Acceleration"),
+                        static_cast<uint32_t>(40001));
+              EXPECT_EQ(config.getParameter("Profile Acceleration"),
+                        static_cast<uint32_t>(40000));
+              EXPECT_EQ(config.getParameter("Profile Deceleration"),
+                        static_cast<uint32_t>(40000));
+              EXPECT_EQ(config.getParameter("Quickstop Deceleration"),
+                        static_cast<uint32_t>(10000));
+              EXPECT_EQ(config.getParameter("Motion Profile Type"),
+                        static_cast<int16_t>(1));
+            });
+
+      },
+      [](empty<MaxonParameterList>) -> void {
+        FAIL() << "empty<MaxonParameterList>";
+      },
+      [](missing<MaxonParameterList>) -> void {
+        FAIL() << "missing<MaxonParameterList>";
+      },
+      [](missing<uint32_t>) -> void { FAIL() << "missing<uint32_t>"; },
+      [](invalid<uint32_t>) -> void { FAIL() << "invalid<uint32_t>"; },
+      [](missing<int32_t>) -> void { FAIL() << "missing<int32_t>"; },
+      [](invalid<int32_t>) -> void { FAIL() << "invalid<int32_t>"; },
+      [](empty<MotionProfileTypeValue>) -> void {
+        FAIL() << "missing<MotionProfileTypeValue>";
+      },
+      [](missing<MotionProfileTypeValue>) -> void {
+        FAIL() << "missing<MotionProfileTypeValue>";
+      },
+      [](invalid<MotionProfileTypeValue>) -> void {
+        FAIL() << "invalid<MotionProfileTypeValue>";
+      },
+      [](duplicate<MaxonControllerConfig, std::string>) -> void {
+        FAIL() << "duplicate<MaxonControllerConfig, std::string>)";
+      });
+}
