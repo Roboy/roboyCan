@@ -1,7 +1,7 @@
 #include "roboy_can/motorsParser.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
-TEST(roboy_yaml, parseMotorNames) {
+TEST(motorParser, parseMotorNames) {
   auto const node = YAML::LoadFile("roboy.yaml");
   motorNamesVariant mnv = node["Maxon"].as<motorNamesVariant>();
   mnv.match(
@@ -13,7 +13,7 @@ TEST(roboy_yaml, parseMotorNames) {
       });
 }
 
-TEST(roboy_yaml, MotorNamesValue) {
+TEST(motorParser, MotorNamesValue) {
   auto const node = YAML::LoadFile("roboy.yaml");
   motorNamesVariant mnv = node["Maxon"].as<motorNamesVariant>();
   mnv.match(
@@ -32,7 +32,7 @@ TEST(roboy_yaml, MotorNamesValue) {
       });
 }
 
-TEST(roboy_yaml, DuplicateMotorName) {
+TEST(motorParser, DuplicateMotorName) {
   auto const node = YAML::LoadFile("roboy_duplicate_motor.yaml");
   motorNamesVariant mnv = node["Maxon"].as<motorNamesVariant>();
   mnv.match(

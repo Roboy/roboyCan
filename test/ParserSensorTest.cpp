@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-TEST(ParseSensor, sensor_yaml) {
+TEST(sensor_yaml, ParseSensor) {
   auto node = YAML::LoadFile("sensor.yaml");
   Sensor se = node["Standard Motor Configuration"].as<Sensor>();
 
@@ -24,7 +24,7 @@ TEST(ParseSensor, sensor_yaml) {
   EXPECT_EQ(isSensor, 2);
 }
 
-TEST(SensorValues, sensor_yaml) {
+TEST(sensor_yaml, SensorValues) {
   auto node = YAML::LoadFile("sensor.yaml");
   Sensor se = node["Standard Motor Configuration"].as<Sensor>();
   SensorConfig seco = se.match(
@@ -62,7 +62,7 @@ TEST(SensorValues, sensor_yaml) {
       static_cast<uint16_t>(EposPositionSensorType::INC_ENCODER_1_W_INDEX_3CH));
 }
 
-TEST(MissingPNIE, sensor_yaml) {
+TEST(sensor_yaml, MissingPNIE) {
   auto node = YAML::LoadFile("sensor.yaml");
   Sensor se = node["Standard Motor Configuration Missing PNIE"].as<Sensor>();
 
@@ -84,7 +84,7 @@ TEST(MissingPNIE, sensor_yaml) {
   EXPECT_EQ(isSensor, 4);
 }
 
-TEST(InvalidPNIE, sensor_yaml) {
+TEST(sensor_yaml, InvalidPNIE) {
   auto node = YAML::LoadFile("sensor.yaml");
   Sensor se = node["Standard Motor Configuration Invalid PNIE"].as<Sensor>();
 
@@ -105,7 +105,7 @@ TEST(InvalidPNIE, sensor_yaml) {
 
   EXPECT_EQ(isSensor, 3);
 }
-TEST(InvalidPNIE_Value, sensor_yaml) {
+TEST(sensor_yaml, InvalidPNIE_Value) {
   auto node = YAML::LoadFile("sensor.yaml");
   Sensor se = node["Standard Motor Configuration Invalid PNIE"].as<Sensor>();
 
