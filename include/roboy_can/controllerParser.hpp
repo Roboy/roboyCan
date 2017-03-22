@@ -32,8 +32,9 @@ using Controllers =
             missing<MotionProfileTypeValue>, invalid<MotionProfileTypeValue>,
             duplicate<MaxonControllerConfig, std::string>>;
 
-auto growController(MaxonControllers previous,
-                    YAML::const_iterator::value_type subnet) -> Controllers {
+inline auto growController(MaxonControllers previous,
+                           YAML::const_iterator::value_type subnet)
+    -> Controllers {
   if (!subnet.second["Max Following Error"]) {
     return missing<uint32_t>{"Max Following Error"};
   };
