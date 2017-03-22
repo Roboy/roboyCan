@@ -15,8 +15,8 @@ using Network =
             invalid<KaCanOpenUsbOptions>, missing<std::string>,
             duplicate<NetworkConfig, std::string>>;
 
-auto growNetwork(Networks previous, YAML::const_iterator::value_type subnet)
-    -> Network {
+inline auto growNetwork(Networks previous,
+                        YAML::const_iterator::value_type subnet) -> Network {
   if (!subnet.second["Baudrate"]) {
     return missing<KaCanOpenBaudrate>{};
   }
