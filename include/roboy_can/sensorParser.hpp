@@ -7,7 +7,7 @@
 
 #include <numeric>
 
-using Sensor =
+using SensorVariant =
     variant<empty<SensorConfig>, missing<SensorConfig>, SensorConfig,
             invalid<EposPulseNumberIncrementalEncoders>,
             missing<EposPulseNumberIncrementalEncoders>,
@@ -51,8 +51,8 @@ template <> struct convert<PositionSensorType> {
   };
 };
 
-template <> struct convert<Sensor> {
-  static bool decode(Node const &input_node, Sensor &sensor) {
+template <> struct convert<SensorVariant> {
+  static bool decode(Node const &input_node, SensorVariant &sensor) {
     Node node;
     if (!input_node["Sensor Configuration"]) {
       sensor = missing<SensorConfig>{};
@@ -69,22 +69,23 @@ template <> struct convert<Sensor> {
       return true;
     };
 
-    sensor =
-        withinBounds<EposPulseNumberIncrementalEncoders>(
-            node, "Pulse Number Incremental Encoder 1", 16, 2500000)
-            .match(
-                passAlong<invalid<EposPulseNumberIncrementalEncoders>,
-                          Sensor>{},
-                [&node](EposPulseNumberIncrementalEncoders pulses) -> Sensor {
-                  return node["Position Sensor Type"]
-                      .as<PositionSensorType>()
-                      .match(
-                          passAlong<invalid<EposPositionSensorType>, Sensor>{},
-                          passAlong<missing<EposPositionSensorType>, Sensor>{},
-                          [&pulses](EposPositionSensorType pst) -> Sensor {
-                            return {SensorConfig(pulses, pst)};
-                          });
-                });
+    sensor = withinBounds<EposPulseNumberIncrementalEncoders>(
+                 node, "Pulse Number Incremental Encoder 1", 16, 2500000)
+                 .match(passAlong<invalid<EposPulseNumberIncrementalEncoders>,
+                                  SensorVariant>{},
+                        [&node](EposPulseNumberIncrementalEncoders pulses)
+                            -> SensorVariant {
+                          return node["Position Sensor Type"]
+                              .as<PositionSensorType>()
+                              .match(passAlong<invalid<EposPositionSensorType>,
+                                               SensorVariant>{},
+                                     passAlong<missing<EposPositionSensorType>,
+                                               SensorVariant>{},
+                                     [&pulses](EposPositionSensorType pst)
+                                         -> SensorVariant {
+                                       return {SensorConfig(pulses, pst)};
+                                     });
+                        });
     return true;
   };
 };

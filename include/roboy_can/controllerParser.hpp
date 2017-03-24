@@ -24,7 +24,7 @@ using MotionProfileType =
     variant<empty<MotionProfileTypeValue>, missing<MotionProfileTypeValue>,
             invalid<MotionProfileTypeValue>, MotionProfileTypeValue>;
 
-using Controllers =
+using ControllersVariant =
     variant<empty<MaxonControllers>, MaxonControllers,
             empty<MaxonParameterList>, missing<MaxonParameterList>,
             missing<uint32_t>, invalid<uint32_t>, missing<int32_t>,
@@ -34,7 +34,7 @@ using Controllers =
 
 inline auto growController(MaxonControllers previous,
                            YAML::const_iterator::value_type subnet)
-    -> Controllers {
+    -> ControllersVariant {
   if (!subnet.second["Max Following Error"]) {
     return missing<uint32_t>{"Max Following Error"};
   };
@@ -49,36 +49,39 @@ inline auto growController(MaxonControllers previous,
   };
 
   return subnet.second.as<MaxFollowingError>().match(
-      passAlong<missing<uint32_t>, Controllers>{},
-      passAlong<invalid<uint32_t>, Controllers>{},
-      [&subnet, &previous](uint32_t mfev) -> Controllers {
+      passAlong<missing<uint32_t>, ControllersVariant>{},
+      passAlong<invalid<uint32_t>, ControllersVariant>{},
+      [&subnet, &previous](uint32_t mfev) -> ControllersVariant {
 
         return subnet.second.as<PositionLimit>().match(
-            passAlong<missing<MaxonParameterList>, Controllers>{},
-            [&subnet, &previous, &mfev](MaxonParameterList plv) -> Controllers {
+            passAlong<missing<MaxonParameterList>, ControllersVariant>{},
+            [&subnet, &previous,
+             &mfev](MaxonParameterList plv) -> ControllersVariant {
 
               return subnet.second.as<Velocity>().match(
-                  passAlong<missing<uint32_t>, Controllers>{},
-                  passAlong<invalid<uint32_t>, Controllers>{},
+                  passAlong<missing<uint32_t>, ControllersVariant>{},
+                  passAlong<invalid<uint32_t>, ControllersVariant>{},
                   [&subnet, &previous, &mfev,
-                   &plv](MaxonParameterList vel) -> Controllers {
+                   &plv](MaxonParameterList vel) -> ControllersVariant {
 
                     return subnet.second.as<Acceleration>().match(
-                        passAlong<empty<MaxonParameterList>, Controllers>(),
-                        passAlong<missing<uint32_t>, Controllers>{},
-                        passAlong<invalid<uint32_t>, Controllers>{},
+                        passAlong<empty<MaxonParameterList>,
+                                  ControllersVariant>(),
+                        passAlong<missing<uint32_t>, ControllersVariant>{},
+                        passAlong<invalid<uint32_t>, ControllersVariant>{},
                         [&subnet, &previous, &mfev, &plv,
-                         &vel](MaxonParameterList acc) -> Controllers {
+                         &vel](MaxonParameterList acc) -> ControllersVariant {
 
                           return subnet.second.as<MotionProfileType>().match(
                               passAlong<empty<MotionProfileTypeValue>,
-                                        Controllers>(),
+                                        ControllersVariant>(),
                               passAlong<missing<MotionProfileTypeValue>,
-                                        Controllers>(),
+                                        ControllersVariant>(),
                               passAlong<invalid<MotionProfileTypeValue>,
-                                        Controllers>(),
-                              [&subnet, &previous, &mfev, &plv, &vel, &acc](
-                                  MotionProfileTypeValue mpt) -> Controllers {
+                                        ControllersVariant>(),
+                              [&subnet, &previous, &mfev, &plv, &vel,
+                               &acc](MotionProfileTypeValue mpt)
+                                  -> ControllersVariant {
 
                                 auto key = subnet.first.as<std::string>();
                                 if (previous
@@ -258,32 +261,30 @@ template <> struct convert<MotionProfileType> {
   };
 };
 
-template <> struct convert<Controllers> {
-  static bool decode(Node const &node, Controllers &controllers) {
+template <> struct convert<ControllersVariant> {
+  static bool decode(Node const &node, ControllersVariant &controllers) {
     controllers = std::accumulate(
-        node.begin(), node.end(), Controllers{},
-        [](Controllers ctrl, YAML::const_iterator::value_type subnet) {
+        node.begin(), node.end(), ControllersVariant{},
+        [](ControllersVariant ctrl, YAML::const_iterator::value_type subnet) {
 
           return ctrl.match(
-              [&subnet](empty<MaxonControllers>) -> Controllers {
+              [&subnet](empty<MaxonControllers>) -> ControllersVariant {
                 return growController(MaxonControllers{}, subnet);
-
               },
-              [&subnet](MaxonControllers previous) -> Controllers {
-
+              [&subnet](MaxonControllers previous) -> ControllersVariant {
                 return growController(previous, subnet);
               },
-              passAlong<empty<MaxonParameterList>, Controllers>{},
-              passAlong<missing<MaxonParameterList>, Controllers>{},
-              passAlong<missing<uint32_t>, Controllers>{},
-              passAlong<invalid<uint32_t>, Controllers>{},
-              passAlong<missing<int32_t>, Controllers>{},
-              passAlong<invalid<int32_t>, Controllers>{},
-              passAlong<empty<MotionProfileTypeValue>, Controllers>{},
-              passAlong<missing<MotionProfileTypeValue>, Controllers>{},
-              passAlong<invalid<MotionProfileTypeValue>, Controllers>{},
+              passAlong<empty<MaxonParameterList>, ControllersVariant>{},
+              passAlong<missing<MaxonParameterList>, ControllersVariant>{},
+              passAlong<missing<uint32_t>, ControllersVariant>{},
+              passAlong<invalid<uint32_t>, ControllersVariant>{},
+              passAlong<missing<int32_t>, ControllersVariant>{},
+              passAlong<invalid<int32_t>, ControllersVariant>{},
+              passAlong<empty<MotionProfileTypeValue>, ControllersVariant>{},
+              passAlong<missing<MotionProfileTypeValue>, ControllersVariant>{},
+              passAlong<invalid<MotionProfileTypeValue>, ControllersVariant>{},
               passAlong<duplicate<MaxonControllerConfig, std::string>,
-                        Controllers>{});
+                        ControllersVariant>{});
         });
     return true;
   };

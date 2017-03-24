@@ -5,7 +5,6 @@
 #include <map>
 #include <vector>
 
-enum class MotorControlArchitecture { MAXON, FLEXRAY, SPI };
 using EposPulseNumberIncrementalEncoders = uint32_t;
 enum class EposPositionSensorType : uint16_t {
   UNKNOWN,
@@ -136,17 +135,7 @@ private:
 };
 using Networks = std::map<std::string, NetworkConfig>;
 
-class MotorConfig {
-public:
-  MotorConfig() = default;
-  inline MotorConfig(std::string n, unsigned int cid, NetworkConfig nw,
-                     SensorConfig sc, MaxonControllers ctrls) {
-    name = n;
-    canId = cid;
-    network = nw;
-    sensor = sc;
-    controllers = ctrls;
-  };
+struct MotorConfig {
   std::string name;
   unsigned int canId;
   NetworkConfig network;
@@ -154,23 +143,10 @@ public:
   MaxonControllers controllers;
 };
 
-class MaxonConfig {
-public:
-  MaxonConfig() = default;
-  inline MaxonConfig(std::vector<MotorConfig> mcs) {
-    for (auto &&mc : mcs) {
-      addMotor(std::move(mc));
-    }
-  };
-  inline void addMotor(MotorConfig &&mc) { motors_[mc.name] = std::move(mc); };
-
-  std::map<std::string, MotorConfig> motors_;
-};
-
-using Maxon = std::map<MotorControlArchitecture, variant<MaxonConfig>>;
+using MotorConfigs = std::map<std::string, MotorConfig>;
 
 class RoboyConfig {
 public:
   RoboyConfig() = default;
-  Maxon configs;
+  MotorConfigs configs;
 };

@@ -250,9 +250,10 @@ TEST(controller_yaml, MotionProfileTypeValue) {
   EXPECT_EQ(value, MotionProfileTypeValue::SIN2_RAMP_SINUSOIDAL_PROFILE);
 }
 
-TEST(controller_yaml, Controllers) {
+TEST(controller_yaml, ControllersVariant) {
   auto const node = YAML::LoadFile("controller.yaml");
-  Controllers ctrls = node["Control Mode Configuration"].as<Controllers>();
+  ControllersVariant ctrls =
+      node["Control Mode Configuration"].as<ControllersVariant>();
   ctrls.match(
       [](empty<MaxonControllers>) -> void {
         FAIL() << "empty<MaxonControllers>";
@@ -284,7 +285,8 @@ TEST(controller_yaml, Controllers) {
 
 TEST(controller_yaml, ControllersValues) {
   auto const node = YAML::LoadFile("controller.yaml");
-  Controllers ctrls = node["Control Mode Configuration"].as<Controllers>();
+  ControllersVariant ctrls =
+      node["Control Mode Configuration"].as<ControllersVariant>();
   ctrls.match(
       [](empty<MaxonControllers>) -> void {
         FAIL() << "empty<MaxonControllers>";
@@ -340,8 +342,8 @@ TEST(controller_yaml, ControllersValues) {
 
 TEST(controller_yaml, ControllersMissingMaxAcc) {
   auto const node = YAML::LoadFile("controller.yaml");
-  Controllers ctrls =
-      node["Broken Control Mode Configuration"].as<Controllers>();
+  ControllersVariant ctrls =
+      node["Broken Control Mode Configuration"].as<ControllersVariant>();
   ctrls.match(
       [](empty<MaxonControllers>) -> void {
         FAIL() << "empty<MaxonControllers>";
@@ -357,6 +359,39 @@ TEST(controller_yaml, ControllersMissingMaxAcc) {
         SUCCEED();
         // EXPECT_EQ(value.paramName, "Max Acceleration");
       },
+      [](invalid<uint32_t>) -> void { FAIL() << "invalid<uint32_t>"; },
+      [](missing<int32_t>) -> void { FAIL() << "missing<int32_t>"; },
+      [](invalid<int32_t>) -> void { FAIL() << "invalid<int32_t>"; },
+      [](empty<MotionProfileTypeValue>) -> void {
+        FAIL() << "missing<MotionProfileTypeValue>";
+      },
+      [](missing<MotionProfileTypeValue>) -> void {
+        FAIL() << "missing<MotionProfileTypeValue>";
+      },
+      [](invalid<MotionProfileTypeValue>) -> void {
+        FAIL() << "invalid<MotionProfileTypeValue>";
+      },
+      [](duplicate<MaxonControllerConfig, std::string>) -> void {
+        FAIL() << "duplicate<MaxonControllerConfig, std::string>)";
+      });
+}
+
+TEST(roboy_yaml, ControllersVariant) {
+  auto const node = YAML::LoadFile("roboy.yaml");
+  ControllersVariant ctrls =
+      node["Maxon"]["Control Mode Configuration"].as<ControllersVariant>();
+  ctrls.match(
+      [](empty<MaxonControllers>) -> void {
+        FAIL() << "empty<MaxonControllers>";
+      },
+      [](MaxonControllers mcs) -> void { EXPECT_EQ(mcs.size(), 1); },
+      [](empty<MaxonParameterList>) -> void {
+        FAIL() << "empty<MaxonParameterList>";
+      },
+      [](missing<MaxonParameterList> dd) -> void {
+        FAIL() << "missing<MaxonParameterList>: " << dd.paramName;
+      },
+      [](missing<uint32_t>) -> void { FAIL() << "missing<uint32_t>"; },
       [](invalid<uint32_t>) -> void { FAIL() << "invalid<uint32_t>"; },
       [](missing<int32_t>) -> void { FAIL() << "missing<int32_t>"; },
       [](invalid<int32_t>) -> void { FAIL() << "invalid<int32_t>"; },

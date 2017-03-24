@@ -4,14 +4,14 @@
 
 TEST(sensor_yaml, ParseSensor) {
   auto node = YAML::LoadFile("sensor.yaml");
-  Sensor se = node["Standard Motor Configuration"].as<Sensor>();
+  SensorVariant se = node["Standard Motor Configuration"].as<SensorVariant>();
 
   unsigned int isSensor = 12;
 
   isSensor = se.match(
-      [](empty<Sensor>) -> unsigned int { return 0; },
-      [](missing<Sensor>) -> unsigned int { return 1; },
-      [](Sensor sen) -> unsigned int { return 2; },
+      [](empty<SensorConfig>) -> unsigned int { return 0; },
+      [](missing<SensorConfig>) -> unsigned int { return 1; },
+      [](SensorConfig sen) -> unsigned int { return 2; },
       [](invalid<EposPulseNumberIncrementalEncoders>) -> unsigned int {
         return 3;
       },
@@ -26,7 +26,7 @@ TEST(sensor_yaml, ParseSensor) {
 
 TEST(sensor_yaml, SensorValues) {
   auto node = YAML::LoadFile("sensor.yaml");
-  Sensor se = node["Standard Motor Configuration"].as<Sensor>();
+  SensorVariant se = node["Standard Motor Configuration"].as<SensorVariant>();
   SensorConfig seco = se.match(
       [](empty<SensorConfig>) -> SensorConfig { return SensorConfig{}; },
       [](missing<SensorConfig>) -> SensorConfig { return SensorConfig{}; },
@@ -64,14 +64,15 @@ TEST(sensor_yaml, SensorValues) {
 
 TEST(sensor_yaml, MissingPNIE) {
   auto node = YAML::LoadFile("sensor.yaml");
-  Sensor se = node["Standard Motor Configuration Missing PNIE"].as<Sensor>();
+  SensorVariant se =
+      node["Standard Motor Configuration Missing PNIE"].as<SensorVariant>();
 
   unsigned int isSensor = 12;
 
   isSensor = se.match(
-      [](empty<Sensor>) -> unsigned int { return 0; },
-      [](missing<Sensor>) -> unsigned int { return 1; },
-      [](Sensor sen) -> unsigned int { return 2; },
+      [](empty<SensorConfig>) -> unsigned int { return 0; },
+      [](missing<SensorConfig>) -> unsigned int { return 1; },
+      [](SensorConfig sen) -> unsigned int { return 2; },
       [](invalid<EposPulseNumberIncrementalEncoders>) -> unsigned int {
         return 3;
       },
@@ -86,14 +87,15 @@ TEST(sensor_yaml, MissingPNIE) {
 
 TEST(sensor_yaml, InvalidPNIE) {
   auto node = YAML::LoadFile("sensor.yaml");
-  Sensor se = node["Standard Motor Configuration Invalid PNIE"].as<Sensor>();
+  SensorVariant se =
+      node["Standard Motor Configuration Invalid PNIE"].as<SensorVariant>();
 
   unsigned int isSensor = 12;
 
   isSensor = se.match(
-      [](empty<Sensor>) -> unsigned int { return 0; },
-      [](missing<Sensor>) -> unsigned int { return 1; },
-      [](Sensor sen) -> unsigned int { return 2; },
+      [](empty<SensorConfig>) -> unsigned int { return 0; },
+      [](missing<SensorConfig>) -> unsigned int { return 1; },
+      [](SensorConfig sen) -> unsigned int { return 2; },
       [](invalid<EposPulseNumberIncrementalEncoders>) -> unsigned int {
         return 3;
       },
@@ -107,14 +109,15 @@ TEST(sensor_yaml, InvalidPNIE) {
 }
 TEST(sensor_yaml, InvalidPNIE_Value) {
   auto node = YAML::LoadFile("sensor.yaml");
-  Sensor se = node["Standard Motor Configuration Invalid PNIE"].as<Sensor>();
+  SensorVariant se =
+      node["Standard Motor Configuration Invalid PNIE"].as<SensorVariant>();
 
   std::string invEPNIE;
 
   invEPNIE = se.match(
-      [](empty<Sensor>) -> std::string { return ""; },
-      [](missing<Sensor>) -> std::string { return ""; },
-      [](Sensor sen) -> std::string { return ""; },
+      [](empty<SensorConfig>) -> std::string { return ""; },
+      [](missing<SensorConfig>) -> std::string { return ""; },
+      [](SensorConfig sen) -> std::string { return ""; },
       [](invalid<EposPulseNumberIncrementalEncoders> inv) -> std::string {
         return inv.paramName;
       },

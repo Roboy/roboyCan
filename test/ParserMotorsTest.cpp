@@ -43,3 +43,15 @@ TEST(motorParser, DuplicateMotorName) {
         EXPECT_EQ(dd.key, std::string("Left: 34"));
       });
 }
+
+TEST(completeParse, ParseAll) {
+  auto const node = YAML::LoadFile("roboy.yaml");
+  MotorConfigVariant mcv = node["Maxon"].as<MotorConfigVariant>();
+  mcv.match(
+      [](empty<MotorConfigs>) -> void { FAIL() << "empty<MotorConfig>"; },
+      [](MotorConfigs mn) -> void { SUCCEED(); },
+      [](invalid<MotorConfig>) -> void { FAIL() << "invalid<MotorConfig>"; },
+      [](NetworkVariant) -> void { FAIL() << "NetworkVariant"; },
+      [](SensorVariant) -> void { FAIL() << "SensorVariant"; },
+      [](motorNamesVariant) -> void { FAIL() << "SensorVariant"; });
+}

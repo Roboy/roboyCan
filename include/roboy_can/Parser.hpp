@@ -22,8 +22,8 @@ using ConversionTypes =
             RoboyParserErrorMotorUsesUndeclaredNetwork,
             RoboyParserErrorMissingEntry, T>;
 
-template <> struct convert<Sensor> {
-  static bool decode(Node const &node, Sensor &sensor) {
+template <> struct convert<SensorVariant> {
+  static bool decode(Node const &node, SensorVariant &sensor) {
     std::vector<Node> nodes = {
         foo<uint32_t>{node["Pulse Number Incremental Encoder 1"], 16, 2500000},
         foo<uint16_t>{node["Position Sensor Type"], 0, 8}};
@@ -62,12 +62,13 @@ template <> struct convert<Sensor> {
   }
 };
 
-using Controllers = variant<empty<MaxonControllers>, missing<MaxonParameter>,
-                            invalid<MaxonParameter>,
-                            RoboyParserErrorMissingEntry, MaxonControllers>;
+using ControllersVariant =
+    variant<empty<MaxonControllers>, missing<MaxonParameter>,
+            invalid<MaxonParameter>, RoboyParserErrorMissingEntry,
+            MaxonControllers>;
 
-template <> struct convert<Controllers> {
-  static bool decode(Node const &node, Controllers &controllers) {
+template <> struct convert<ControllersVariant> {
+  static bool decode(Node const &node, ControllersVariant &controllers) {
     if (node["Profile Position Mode"]) {
       MaxonParameterList parameters;
 
@@ -154,7 +155,7 @@ template <> struct convert<Maxons> {
     Sensors sensor;
     if (node["Standard Motor Configuration"]["Sensor Configuration"])
       sensor = node["Standard Motor Configuration"]["Sensor Configuration"]
-                   .as<Sensor>()
+                   .as<SensorVariant>()
                    .match([](SensorConfig sc) -> SensorConfig { return sc; },
                           MATCHERROROPTIONS_MACRO);
     else {
@@ -162,11 +163,12 @@ template <> struct convert<Maxons> {
       return true;
     }
 
-    Controllers controllers;
+    ControllersVariant controllers;
     if (node["Control Mode Configuration"])
-      controllers = node["Control Mode Configuration:"].as<Controllers>().match(
-          [](MaxonControllers mc) -> MaxonControllers { return mc; },
-          MATCHERROROPTIONS_MACRO);
+      controllers =
+          node["Control Mode Configuration:"].as<ControllersVariant>().match(
+              [](MaxonControllers mc) -> MaxonControllers { return mc; },
+              MATCHERROROPTIONS_MACRO);
     else {
       rhs = RoboyParserErrorMissingEntry();
       return true;
@@ -192,7 +194,7 @@ template <> struct convert<Maxons> {
                                                               // overriding
                                                               // motor configs
           controllers = itMotors->second["Control Mode Configuration"]
-                            .as<Controllers>()
+                            .as<ControllersVariant>()
                             .match(
                                 [](MaxonControllers mc) -> MaxonControllers {
                                   return mc;
