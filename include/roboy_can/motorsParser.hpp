@@ -84,9 +84,8 @@ template <> struct convert<MotorConfigVariant> {
                     },
                     [&node, &nn, &sc](MaxonControllers mcs) -> MCV {
                       return node.as<motorNamesVariant>().match(
-                          [](empty<motorNames>) -> MCV {
-                            passAlong<empty<motorNames>, MCV>{};
-                          },
+                            passAlong<empty<motorNames>, MCV>{}
+                          ,
                           [&nn, &sc, &mcs](motorNames mn) -> MCV {
                             MotorConfigs motors;
                             for (auto &motor : mn) {
@@ -104,15 +103,9 @@ template <> struct convert<MotorConfigVariant> {
                             }
                             return motors;
                           },
-                          [](missing<motorNames>) -> MCV {
-
-                            passAlong<missing<motorNames>, MCV>{};
-                          },
-                          [](duplicate<CanIdNetworktuple, std::string>) -> MCV {
-
-                            passAlong<duplicate<CanIdNetworktuple, std::string>,
-                                      MCV>{};
-                          });
+                          passAlong<missing<motorNames>, MCV>{},
+                          passAlong<duplicate<CanIdNetworktuple, std::string>,
+                                    MCV>{});
                     },
                     [](missing<MaxonControllers>) -> MCV {
                       passAlong<missing<MaxonControllers>, MCV>{};
@@ -149,36 +142,18 @@ template <> struct convert<MotorConfigVariant> {
                                 MCV>{};
                     });
               },
-              [](invalid<EposPulseNumberIncrementalEncoders>) -> MCV {
-                passAlong<invalid<EposPulseNumberIncrementalEncoders>, MCV>{};
-              },
-              [](missing<EposPulseNumberIncrementalEncoders>) -> MCV {
-                passAlong<missing<EposPulseNumberIncrementalEncoders>, MCV>{};
-              },
-              [](invalid<EposPositionSensorType>) -> MCV {
-                passAlong<invalid<EposPositionSensorType>, MCV>{};
-              },
-              [](missing<EposPositionSensorType>) -> MCV {
-                passAlong<missing<EposPositionSensorType>, MCV>{};
-              },
-              [](invalid<KaCanOpenUsbOptions>) -> MCV {
-                passAlong<invalid<KaCanOpenUsbOptions>, MCV>{};
-              });
+              passAlong<invalid<EposPulseNumberIncrementalEncoders>, MCV>{},
+              passAlong<missing<EposPulseNumberIncrementalEncoders>, MCV>{},
+              passAlong<invalid<EposPositionSensorType>, MCV>{},
+              passAlong<missing<EposPositionSensorType>, MCV>{},
+              passAlong<invalid<KaCanOpenUsbOptions>, MCV>{});
         },
         passAlong<missing<Networks>, MCV>{},
-        [](missing<KaCanOpenBaudrate>) -> MCV {
-          passAlong<missing<KaCanOpenBaudrate>, MCV>{};
-        },
-        [](invalid<KaCanOpenBaudrate>) -> MCV {
-          passAlong<invalid<KaCanOpenBaudrate>, MCV>{};
-        },
-        [](missing<KaCanOpenUsbOptions>) -> MCV {
-          passAlong<missing<KaCanOpenUsbOptions>, MCV>{};
-        },
-        [](invalid<KaCanOpenUsbOptions>) -> MCV {
-          passAlong<invalid<KaCanOpenUsbOptions>, MCV>{};
-        },
-        [](missing<UsbSerial>) -> MCV { passAlong<missing<UsbSerial>, MCV>{}; },
+        passAlong<missing<KaCanOpenBaudrate>, MCV>{},
+        passAlong<invalid<KaCanOpenBaudrate>, MCV>{},
+        passAlong<missing<KaCanOpenUsbOptions>, MCV>{},
+        passAlong<invalid<KaCanOpenUsbOptions>, MCV>{},
+        passAlong<missing<UsbSerial>, MCV>{},
         passAlong<duplicate<NetworkConfig, std::string>, MCV>{});
     return true;
   };
