@@ -11,12 +11,14 @@
 
 using Baudrate = variant<invalid<KaCanOpenBaudrate>, KaCanOpenBaudrate>;
 using UsbOptions = variant<invalid<KaCanOpenUsbOptions>, KaCanOpenUsbOptions>;
-
+struct UsbSerial {
+  std::string serial;
+};
 using NetworkVariant =
     variant<empty<Networks>, Networks, missing<Networks>,
             missing<KaCanOpenBaudrate>, invalid<KaCanOpenBaudrate>,
             missing<KaCanOpenUsbOptions>, invalid<KaCanOpenUsbOptions>,
-            missing<std::string>, duplicate<NetworkConfig, std::string>>;
+            missing<UsbSerial>, duplicate<NetworkConfig, std::string>>;
 
 inline auto growNetwork(Networks previous,
                         YAML::const_iterator::value_type subnet,
@@ -29,7 +31,7 @@ inline auto growNetwork(Networks previous,
     return missing<KaCanOpenUsbOptions>{};
   }
   if (!subnet.second["USB Serial"]) {
-    return missing<std::string>{};
+    return missing<UsbSerial>{};
   }
 
   return subnet.second["Baudrate"].as<Baudrate>().match(
@@ -45,7 +47,7 @@ inline auto growNetwork(Networks previous,
                 temp_serial = subnet.second["USB Serial"].as<std::string>();
 
               } catch (const YAML::BadConversion &e) {
-                return missing<std::string>{};
+                return missing<UsbSerial>{};
               }
               if (serial.emplace(temp_serial).second == false) {
                 return duplicate<NetworkConfig, std::string>{"Usb Serial"};
@@ -140,7 +142,7 @@ template <> struct convert<NetworkVariant> {
               passAlong<invalid<KaCanOpenBaudrate>, NetworkVariant>{},
               passAlong<missing<KaCanOpenUsbOptions>, NetworkVariant>{},
               passAlong<invalid<KaCanOpenUsbOptions>, NetworkVariant>{},
-              passAlong<missing<std::string>, NetworkVariant>{},
+              passAlong<missing<UsbSerial>, NetworkVariant>{},
               passAlong<duplicate<NetworkConfig, std::string>,
                         NetworkVariant>{});
         });

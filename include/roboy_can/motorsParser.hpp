@@ -105,9 +105,11 @@ template <> struct convert<MotorConfigVariant> {
                             return motors;
                           },
                           [](missing<motorNames>) -> MCV {
+
                             passAlong<missing<motorNames>, MCV>{};
                           },
                           [](duplicate<CanIdNetworktuple, std::string>) -> MCV {
+
                             passAlong<duplicate<CanIdNetworktuple, std::string>,
                                       MCV>{};
                           });
@@ -176,12 +178,8 @@ template <> struct convert<MotorConfigVariant> {
         [](invalid<KaCanOpenUsbOptions>) -> MCV {
           passAlong<invalid<KaCanOpenUsbOptions>, MCV>{};
         },
-        [](missing<std::string>) -> MCV {
-          passAlong<missing<std::string>, MCV>{};
-        },
-        [](duplicate<NetworkConfig, std::string>) -> MCV {
-          passAlong<duplicate<NetworkConfig, std::string>, MCV>{};
-        });
+        [](missing<UsbSerial>) -> MCV { passAlong<missing<UsbSerial>, MCV>{}; },
+        passAlong<duplicate<NetworkConfig, std::string>, MCV>{});
     return true;
   };
 };
