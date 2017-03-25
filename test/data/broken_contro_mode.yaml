@@ -1,0 +1,15 @@
+Control Mode Configuration:
+  Profile Position Mode Missing Max Acc:
+    Max Following Error: 5000
+    Position:
+      Min Position Limit: -2147483648 # Leave at default values
+      Max Position Limit: 2147483647 # Leave at default values
+    Velocity:
+      Max Profile Velocity: 8000
+      Profile Velocity: 8000
+    Acceleration:
+      #Max Acceleration: 40001
+      Profile Acceleration: 40000
+      Profile Deceleration: 40000
+      Quickstop Deceleration: 10000 # Leave at default values
+    Motion Profile Type: 1

@@ -1,0 +1,58 @@
+Maxon: #User Configurable Name
+  Broken Network: #Fixed tag
+      Left: #User Configurable ID
+        Driver: usbtin
+        Baudrate: 1M #
+        USB Serial: A1B2C3
+      Right: #User Configurable ID
+        Driver: usbtin
+        Baudrate: 1M
+        USB Serial: D4E5F6
+
+  Broken Standard Motor Configuration: # Fixed Tag
+    Sensor Configuration:
+      Pulse Number Incremental Encoder 1: 512
+      Position Sensor Type: 2
+
+  Broken Control Mode Configuration:
+    Profile Position Mode:
+      Max Following Error: 5000
+      Position:
+        Min Position Limit: -2147483648 # Leave at default values
+        Max Position Limit: 2147483647 # Leave at default values
+      Velocity:
+        Max Profile Velocity: 8000
+        Profile Velocity: 8000
+      Acceleration:
+        Max Acceleration: 40001
+        Profile Acceleration: 40000
+        Profile Deceleration: 40000
+        Quickstop Deceleration: 10000 # Leave at default values
+      Motion Profile Type: 1
+
+  Broken Motors: #Fixed Tag
+    Left:
+      1:
+        id: BriskBugs # Human readable, user configurable name
+      31:
+        id: SoberHunters
+      32:
+        id: SurelyFlowers
+      33:
+        id: ColdDogs
+      34:
+        id: ChosenPlants
+
+    Right:
+      35:
+        id: JumpyLifeforms
+      36:
+        id: BeautifulPriests
+      37:
+        id: FunnyDonkeys
+      41:
+        id: GoodLemurs
+      39:
+        id: AstonishingHedgehogs
+      42:
+        id: CautiousFish

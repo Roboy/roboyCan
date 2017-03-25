@@ -252,13 +252,15 @@ TEST(controller_yaml, MotionProfileTypeValue) {
 
 TEST(controller_yaml, ControllersVariant) {
   auto const node = YAML::LoadFile("controller.yaml");
-  ControllersVariant ctrls =
-      node["Control Mode Configuration"].as<ControllersVariant>();
+  ControllersVariant ctrls = node.as<ControllersVariant>();
   ctrls.match(
       [](empty<MaxonControllers>) -> void {
         FAIL() << "empty<MaxonControllers>";
       },
       [](MaxonControllers mcs) -> void { EXPECT_EQ(mcs.size(), 2); },
+      [](missing<MaxonControllers>) -> void {
+        FAIL() << "missing<MaxonControllers>";
+      },
       [](empty<MaxonParameterList>) -> void {
         FAIL() << "empty<MaxonParameterList>";
       },
@@ -285,8 +287,7 @@ TEST(controller_yaml, ControllersVariant) {
 
 TEST(controller_yaml, ControllersValues) {
   auto const node = YAML::LoadFile("controller.yaml");
-  ControllersVariant ctrls =
-      node["Control Mode Configuration"].as<ControllersVariant>();
+  ControllersVariant ctrls = node.as<ControllersVariant>();
   ctrls.match(
       [](empty<MaxonControllers>) -> void {
         FAIL() << "empty<MaxonControllers>";
@@ -316,6 +317,9 @@ TEST(controller_yaml, ControllersValues) {
                         static_cast<int16_t>(1));
             });
       },
+      [](missing<MaxonControllers>) -> void {
+        FAIL() << "missing<MaxonControllers>";
+      },
       [](empty<MaxonParameterList>) -> void {
         FAIL() << "empty<MaxonParameterList>";
       },
@@ -341,14 +345,16 @@ TEST(controller_yaml, ControllersValues) {
 }
 
 TEST(controller_yaml, ControllersMissingMaxAcc) {
-  auto const node = YAML::LoadFile("controller.yaml");
-  ControllersVariant ctrls =
-      node["Broken Control Mode Configuration"].as<ControllersVariant>();
+  auto const node = YAML::LoadFile("broken_contro_mode.yaml");
+  ControllersVariant ctrls = node.as<ControllersVariant>();
   ctrls.match(
       [](empty<MaxonControllers>) -> void {
         FAIL() << "empty<MaxonControllers>";
       },
       [](MaxonControllers mcs) -> void { FAIL() << "MaxonControllers mcs"; },
+      [](missing<MaxonControllers>) -> void {
+        FAIL() << "missing<MaxonControllers>";
+      },
       [](empty<MaxonParameterList>) -> void {
         FAIL() << "empty<MaxonParameterList>";
       },
@@ -378,13 +384,15 @@ TEST(controller_yaml, ControllersMissingMaxAcc) {
 
 TEST(roboy_yaml, ControllersVariant) {
   auto const node = YAML::LoadFile("roboy.yaml");
-  ControllersVariant ctrls =
-      node["Maxon"]["Control Mode Configuration"].as<ControllersVariant>();
+  ControllersVariant ctrls = node["Maxon"].as<ControllersVariant>();
   ctrls.match(
       [](empty<MaxonControllers>) -> void {
         FAIL() << "empty<MaxonControllers>";
       },
       [](MaxonControllers mcs) -> void { EXPECT_EQ(mcs.size(), 1); },
+      [](missing<MaxonControllers>) -> void {
+        FAIL() << "missing<MaxonControllers>";
+      },
       [](empty<MaxonParameterList>) -> void {
         FAIL() << "empty<MaxonParameterList>";
       },

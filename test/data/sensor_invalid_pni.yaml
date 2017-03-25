@@ -1,0 +1,4 @@
+Standard Motor Configuration: # Fixed Tag
+  Sensor Configuration:
+    Pulse Number Incremental Encoder 1: 2500001 # invalid value, its over 2500000
+    Position Sensor Type: 2

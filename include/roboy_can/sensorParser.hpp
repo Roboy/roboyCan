@@ -54,11 +54,12 @@ template <> struct convert<PositionSensorType> {
 template <> struct convert<SensorVariant> {
   static bool decode(Node const &input_node, SensorVariant &sensor) {
     Node node;
-    if (!input_node["Sensor Configuration"]) {
+    if (!input_node["Standard Motor Configuration"] ||
+        !input_node["Standard Motor Configuration"]["Sensor Configuration"]) {
       sensor = missing<SensorConfig>{};
       return true;
     } else
-      node = input_node["Sensor Configuration"];
+      node = input_node["Standard Motor Configuration"]["Sensor Configuration"];
 
     if (!node["Pulse Number Incremental Encoder 1"]) {
       sensor = missing<EposPulseNumberIncrementalEncoders>{};

@@ -71,90 +71,81 @@ template <> struct convert<motorNamesVariant> {
 using MCV = MotorConfigVariant;
 template <> struct convert<MotorConfigVariant> {
   static bool decode(Node const &node, MCV &motorConfig) {
-    motorConfig = node["Network"].as<NetworkVariant>().match(
+    motorConfig = node.as<NetworkVariant>().match(
         [](empty<Networks> n) -> MCV { passAlong<empty<Networks>, MCV>{}; },
         [&node](Networks nn) -> MCV { // next level
-          return node["Standard Motor Configuration"].as<SensorVariant>().match(
-              [](empty<SensorConfig>) -> MCV {
-                passAlong<empty<SensorConfig>, MCV>{};
-              },
-              [](missing<SensorConfig>) -> MCV {
-                passAlong<missing<SensorConfig>, MCV>{};
-              },
+          return node.as<SensorVariant>().match(
+              passAlong<empty<SensorConfig>, MCV>{},
+              passAlong<missing<SensorConfig>, MCV>{},
               [&node, &nn](SensorConfig sc) -> MCV { // next level
-                return node["Control Mode Configuration"]
-                    .as<ControllersVariant>()
-                    .match(
-                        [](empty<MaxonControllers>) -> MCV {
-                          passAlong<empty<MaxonControllers>, MCV>{};
-                        },
-                        [&node, &nn, &sc](MaxonControllers mcs) -> MCV {
-                          return node.as<motorNamesVariant>().match(
-                              [](empty<motorNames>) -> MCV {
-                                passAlong<empty<motorNames>, MCV>{};
-                              },
-                              [&nn, &sc, &mcs](motorNames mn) -> MCV {
-                                MotorConfigs motors;
-                                for (auto &motor : mn) {
-                                  if (nn.find(motor.second.network) ==
-                                      nn.end()) {
-                                    return invalid<MotorConfig>{
-                                        motor.first}; // Should mean: invalid
-                                    // network configuration on
-                                    // motorname motor.first
-                                  }
-                                  motors.emplace(
-                                      motor.first,
-                                      MotorConfig{motor.first,
-                                                  motor.second.canId,
-                                                  nn.at(motor.second.network),
-                                                  sc, mcs});
-                                }
-                                return motors;
-                              },
-                              [](missing<motorNames>) -> MCV {
-                                passAlong<missing<motorNames>, MCV>{};
-                              },
-                              [](duplicate<CanIdNetworktuple, std::string>)
-                                  -> MCV {
-                                passAlong<
-                                    duplicate<CanIdNetworktuple, std::string>,
-                                    MCV>{};
-                              });
-                        },
-                        [](empty<MaxonParameterList>) -> MCV {
-                          passAlong<empty<MaxonParameterList>, MCV>{};
-                        },
-                        [](missing<MaxonParameterList>) -> MCV {
-                          passAlong<missing<MaxonParameterList>, MCV>{};
-                        },
-                        [](missing<uint32_t>) -> MCV {
-                          passAlong<missing<uint32_t>, MCV>{};
-                        },
-                        [](invalid<uint32_t>) -> MCV {
-                          passAlong<invalid<uint32_t>, MCV>{};
-                        },
-                        [](missing<int32_t>) -> MCV {
-                          passAlong<missing<int32_t>, MCV>{};
-                        },
-                        [](invalid<int32_t>) -> MCV {
-                          passAlong<invalid<int32_t>, MCV>{};
-                        },
-                        [](empty<MotionProfileTypeValue>) -> MCV {
-                          passAlong<empty<MotionProfileTypeValue>, MCV>{};
-                        },
-                        [](missing<MotionProfileTypeValue>) -> MCV {
-                          passAlong<missing<MotionProfileTypeValue>, MCV>{};
-                        },
-                        [](invalid<MotionProfileTypeValue>) -> MCV {
-                          passAlong<invalid<MotionProfileTypeValue>, MCV>{};
-                        },
-                        [](duplicate<MaxonControllerConfig, std::string>)
-                            -> MCV {
-                          passAlong<
-                              duplicate<MaxonControllerConfig, std::string>,
-                              MCV>{};
-                        });
+                return node.as<ControllersVariant>().match(
+                    [](empty<MaxonControllers>) -> MCV {
+                      passAlong<empty<MaxonControllers>, MCV>{};
+                    },
+                    [&node, &nn, &sc](MaxonControllers mcs) -> MCV {
+                      return node.as<motorNamesVariant>().match(
+                          [](empty<motorNames>) -> MCV {
+                            passAlong<empty<motorNames>, MCV>{};
+                          },
+                          [&nn, &sc, &mcs](motorNames mn) -> MCV {
+                            MotorConfigs motors;
+                            for (auto &motor : mn) {
+                              if (nn.find(motor.second.network) == nn.end()) {
+                                return invalid<MotorConfig>{
+                                    motor.first}; // Should mean: invalid
+                                // network configuration on
+                                // motorname motor.first
+                              }
+                              motors.emplace(
+                                  motor.first,
+                                  MotorConfig{motor.first, motor.second.canId,
+                                              nn.at(motor.second.network), sc,
+                                              mcs});
+                            }
+                            return motors;
+                          },
+                          [](missing<motorNames>) -> MCV {
+                            passAlong<missing<motorNames>, MCV>{};
+                          },
+                          [](duplicate<CanIdNetworktuple, std::string>) -> MCV {
+                            passAlong<duplicate<CanIdNetworktuple, std::string>,
+                                      MCV>{};
+                          });
+                    },
+                    [](missing<MaxonControllers>) -> MCV {
+                      passAlong<missing<MaxonControllers>, MCV>{};
+                    },
+                    [](empty<MaxonParameterList>) -> MCV {
+                      passAlong<empty<MaxonParameterList>, MCV>{};
+                    },
+                    [](missing<MaxonParameterList>) -> MCV {
+                      passAlong<missing<MaxonParameterList>, MCV>{};
+                    },
+                    [](missing<uint32_t>) -> MCV {
+                      passAlong<missing<uint32_t>, MCV>{};
+                    },
+                    [](invalid<uint32_t>) -> MCV {
+                      passAlong<invalid<uint32_t>, MCV>{};
+                    },
+                    [](missing<int32_t>) -> MCV {
+                      passAlong<missing<int32_t>, MCV>{};
+                    },
+                    [](invalid<int32_t>) -> MCV {
+                      passAlong<invalid<int32_t>, MCV>{};
+                    },
+                    [](empty<MotionProfileTypeValue>) -> MCV {
+                      passAlong<empty<MotionProfileTypeValue>, MCV>{};
+                    },
+                    [](missing<MotionProfileTypeValue>) -> MCV {
+                      passAlong<missing<MotionProfileTypeValue>, MCV>{};
+                    },
+                    [](invalid<MotionProfileTypeValue>) -> MCV {
+                      passAlong<invalid<MotionProfileTypeValue>, MCV>{};
+                    },
+                    [](duplicate<MaxonControllerConfig, std::string>) -> MCV {
+                      passAlong<duplicate<MaxonControllerConfig, std::string>,
+                                MCV>{};
+                    });
               },
               [](invalid<EposPulseNumberIncrementalEncoders>) -> MCV {
                 passAlong<invalid<EposPulseNumberIncrementalEncoders>, MCV>{};
@@ -172,6 +163,7 @@ template <> struct convert<MotorConfigVariant> {
                 passAlong<invalid<KaCanOpenUsbOptions>, MCV>{};
               });
         },
+        passAlong<missing<Networks>, MCV>{},
         [](missing<KaCanOpenBaudrate>) -> MCV {
           passAlong<missing<KaCanOpenBaudrate>, MCV>{};
         },

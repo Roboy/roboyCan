@@ -92,3 +92,7 @@ configure_file(test/data/networks.yaml ${CMAKE_CURRENT_BINARY_DIR}/networks.yaml
 configure_file(test/data/sensor.yaml ${CMAKE_CURRENT_BINARY_DIR}/sensor.yaml COPYONLY)
 configure_file(test/data/controller.yaml ${CMAKE_CURRENT_BINARY_DIR}/controller.yaml COPYONLY)
 configure_file(test/data/roboy_duplicate_motor.yaml ${CMAKE_CURRENT_BINARY_DIR}/roboy_duplicate_motor.yaml COPYONLY)
+configure_file(test/data/broken_contro_mode.yaml ${CMAKE_CURRENT_BINARY_DIR}/broken_contro_mode.yaml COPYONLY)
+configure_file(test/data/sensor_missing_pni.yaml ${CMAKE_CURRENT_BINARY_DIR}/sensor_missing_pni.yaml COPYONLY)
+configure_file(test/data/sensor_invalid_pni.yaml ${CMAKE_CURRENT_BINARY_DIR}/sensor_invalid_pni.yaml COPYONLY)
+configure_file(test/data/broken_roboy.yaml ${CMAKE_CURRENT_BINARY_DIR}/broken_roboy.yaml COPYONLY)

@@ -26,9 +26,9 @@ using MotionProfileType =
 
 using ControllersVariant =
     variant<empty<MaxonControllers>, MaxonControllers,
-            empty<MaxonParameterList>, missing<MaxonParameterList>,
-            missing<uint32_t>, invalid<uint32_t>, missing<int32_t>,
-            invalid<int32_t>, empty<MotionProfileTypeValue>,
+            missing<MaxonControllers>, empty<MaxonParameterList>,
+            missing<MaxonParameterList>, missing<uint32_t>, invalid<uint32_t>,
+            missing<int32_t>, invalid<int32_t>, empty<MotionProfileTypeValue>,
             missing<MotionProfileTypeValue>, invalid<MotionProfileTypeValue>,
             duplicate<MaxonControllerConfig, std::string>>;
 
@@ -263,8 +263,13 @@ template <> struct convert<MotionProfileType> {
 
 template <> struct convert<ControllersVariant> {
   static bool decode(Node const &node, ControllersVariant &controllers) {
+    if (!node["Control Mode Configuration"]) {
+      controllers = missing<MaxonControllers>{};
+      return true;
+    }
+    Node newnode = node["Control Mode Configuration"];
     controllers = std::accumulate(
-        node.begin(), node.end(), ControllersVariant{},
+        newnode.begin(), newnode.end(), ControllersVariant{},
         [](ControllersVariant ctrl, YAML::const_iterator::value_type subnet) {
 
           return ctrl.match(
@@ -274,6 +279,7 @@ template <> struct convert<ControllersVariant> {
               [&subnet](MaxonControllers previous) -> ControllersVariant {
                 return growController(previous, subnet);
               },
+              passAlong<missing<MaxonControllers>, ControllersVariant>{},
               passAlong<empty<MaxonParameterList>, ControllersVariant>{},
               passAlong<missing<MaxonParameterList>, ControllersVariant>{},
               passAlong<missing<uint32_t>, ControllersVariant>{},
