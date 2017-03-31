@@ -14,6 +14,7 @@ struct CanIdNetworktuple {
   unsigned int canId;
   std::string network;
 };
+
 using motorNames = std::map<std::string, CanIdNetworktuple>;
 using motorNamesVariant =
     variant<empty<motorNames>, motorNames, missing<motorNames>,
