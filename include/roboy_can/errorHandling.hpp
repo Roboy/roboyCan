@@ -4,9 +4,14 @@
 
 template <typename T> struct empty {};
 
-template <typename T> struct invalid { std::string paramName; };
+// template <typename T> struct invalid { std::string reason; };
 
-template <typename T> struct missing { std::string paramName; };
+template <typename T> struct invalid {
+  explicit invalid(std::string st) : reason{st} {};
+  std::string reason;
+};
+
+template <typename T> struct missing { std::string reason; };
 
 template <typename T, typename Key> struct duplicate { Key key; };
 
