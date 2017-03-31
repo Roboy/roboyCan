@@ -2,83 +2,35 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-TEST(networks_yaml, ParseNetwork) {
+TEST(parseNetwork, networks) {
   auto node = YAML::LoadFile("networks.yaml");
   NetworkVariant nw = node["Network"].as<NetworkVariant>();
 
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
            [](Networks nn) -> void { SUCCEED(); },
-           [](missing<Networks>) -> void { FAIL() << "missing<Networks>"; },
-           [](missing<KaCanOpenBaudrate>) -> void {
-             FAIL() << "missing<KaCanOpenBaudrate>";
-           },
-           [](invalid<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](missing<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "missing<KaCanOpenUsbOptions>";
-           },
-           [](invalid<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "invalid<KaCanOpenUsbOptions>";
-           },
-           [](missing<UsbSerial>) -> void { FAIL() << "missing<UsbSerial>"; },
-           [](duplicate<NetworkConfig, std::string>) -> void {
-             FAIL() << "duplicate<NetworkConfig, std::string>";
-           });
+           [](invalid<Networks> in) -> void { FAIL() << in.reason; });
 }
-
-TEST(broken_roboy, ParseNetwork) {
+TEST(parseNetwork, brokenRoboy) {
   auto node = YAML::LoadFile("broken_roboy.yaml");
-  NetworkVariant nw = node.as<NetworkVariant>();
+  NetworkVariant nw = node["Network"].as<NetworkVariant>();
 
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
-           [](Networks nn) -> void { FAIL() << "Networks nn>"; },
-           [](missing<Networks>) -> void { SUCCEED(); },
-           [](missing<KaCanOpenBaudrate>) -> void {
-             FAIL() << "missing<KaCanOpenBaudrate>";
-           },
-           [](invalid<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](missing<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "missing<KaCanOpenUsbOptions>";
-           },
-           [](invalid<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "invalid<KaCanOpenUsbOptions>";
-           },
-           [](missing<UsbSerial>) -> void { FAIL() << "missing<UsbSerial>"; },
-           [](duplicate<NetworkConfig, std::string>) -> void {
-             FAIL() << "duplicate<NetworkConfig, std::string>";
+           [](Networks) -> void { FAIL() << "Networks"; },
+           [](invalid<Networks> in) -> void {
+             EXPECT_EQ(in.reason, "Missing Network Section.");
            });
 }
 
-TEST(networks_yaml, NetworkSize) {
+TEST(parseNetwork, networksSize) {
   auto node = YAML::LoadFile("networks.yaml");
   NetworkVariant nw = node["Network"].as<NetworkVariant>();
 
-  Networks networks;
-
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
            [](Networks nn) -> void { EXPECT_EQ(nn.size(), 2); },
-           [](missing<Networks>) -> void { FAIL() << "missing<Networks>"; },
-           [](missing<KaCanOpenBaudrate>) -> void {
-             FAIL() << "missing<KaCanOpenBaudrate>";
-           },
-           [](invalid<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](missing<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "missing<KaCanOpenUsbOptions>";
-           },
-           [](invalid<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "invalid<KaCanOpenUsbOptions>";
-           },
-           [](missing<UsbSerial>) -> void { FAIL() << "missing<UsbSerial>"; },
-           [](duplicate<NetworkConfig, std::string>) -> void {
-             FAIL() << "duplicate<NetworkConfig, std::string>";
-           });
+           [](invalid<Networks> in) -> void { FAIL() << in.reason; });
 }
-TEST(networks_yaml, Network_eft) {
+
+TEST(parseNetwork, networkEFT) {
   auto node = YAML::LoadFile("networks.yaml");
   NetworkVariant nw = node["Network"].as<NetworkVariant>();
 
@@ -93,209 +45,93 @@ TEST(networks_yaml, Network_eft) {
         EXPECT_EQ(network["Right"].getBaudrate(), KaCanOpenBaudrate::Baud500k);
         EXPECT_EQ(network["Right"].getUsbSerial(), std::string("D4E5F6"));
       },
-      [](missing<Networks>) -> void { FAIL() << "missing<Networks>"; },
-      [](missing<KaCanOpenBaudrate>) -> void {
-        FAIL() << "missing<KaCanOpenBaudrate>";
-      },
-      [](invalid<KaCanOpenBaudrate>) -> void {
-        FAIL() << "invalid<KaCanOpenBaudrate>";
-      },
-      [](missing<KaCanOpenUsbOptions>) -> void {
-        FAIL() << "missing<KaCanOpenUsbOptions>";
-      },
-      [](invalid<KaCanOpenUsbOptions>) -> void {
-        FAIL() << "invalid<KaCanOpenUsbOptions>";
-      },
-      [](missing<UsbSerial>) -> void { FAIL() << "missing<UsbSerial>"; },
-      [](duplicate<NetworkConfig, std::string>) -> void {
-        FAIL() << "duplicate<NetworkConfig, std::string>";
-      });
+      [](invalid<Networks> in) -> void { FAIL() << in.reason; });
 }
 
-TEST(networks_yaml, missing_Baudrate) {
+TEST(parseNetwork, missingBaudrate) {
   auto node = YAML::LoadFile("networks.yaml");
   NetworkVariant nw = node["Network_missing_baudrate"].as<NetworkVariant>();
 
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
-           [](Networks nn) -> void { FAIL() << "Networks nn"; },
-           [](missing<Networks>) -> void { FAIL() << "missing<Networks>"; },
-           [](missing<KaCanOpenBaudrate>) -> void { SUCCEED(); },
-           [](invalid<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](missing<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "missing<KaCanOpenUsbOptions>";
-           },
-           [](invalid<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "invalid<KaCanOpenUsbOptions>";
-           },
-           [](missing<UsbSerial>) -> void { FAIL() << "missing<UsbSerial>"; },
-           [](duplicate<NetworkConfig, std::string>) -> void {
-             FAIL() << "duplicate<NetworkConfig, std::string>";
+           [](Networks) -> void { FAIL() << "Networks"; },
+           [](invalid<Networks> in) -> void {
+             EXPECT_EQ(in.reason, "Missing Baudrate.");
            });
 }
 
-TEST(networks_yaml, wrong_Baudrate) {
+TEST(parseNetwork, wrongBaudrate) {
   auto node = YAML::LoadFile("networks.yaml");
   NetworkVariant nw = node["Network_wrong_baudrate"].as<NetworkVariant>();
 
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
-           [](Networks nn) -> void { FAIL() << "Networks nn"; },
-           [](missing<Networks>) -> void { FAIL() << "missing<Networks>"; },
-           [](missing<KaCanOpenBaudrate>) -> void {
-             FAIL() << "missing<KaCanOpenBaudrate>";
-           },
-           [](invalid<KaCanOpenBaudrate>) -> void { SUCCEED(); },
-           [](missing<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "missing<KaCanOpenUsbOptions>";
-           },
-           [](invalid<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "invalid<KaCanOpenUsbOptions>";
-           },
-           [](missing<UsbSerial>) -> void { FAIL() << "missing<UsbSerial>"; },
-           [](duplicate<NetworkConfig, std::string>) -> void {
-             FAIL() << "duplicate<NetworkConfig, std::string>";
+           [](Networks) -> void { FAIL() << "Networks"; },
+           [](invalid<Networks> in) -> void {
+             EXPECT_EQ(in.reason, "Baudrate: Not a valid value.");
            });
 }
 
-TEST(networks_yaml, missing_UsbOption) {
+TEST(parseNetwork, missingUsbOption) {
   auto node = YAML::LoadFile("networks.yaml");
   NetworkVariant nw = node["Network_missing_UsbOption"].as<NetworkVariant>();
 
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
-           [](Networks nn) -> void { FAIL() << "Networks nn"; },
-           [](missing<Networks>) -> void { FAIL() << "missing<Networks>"; },
-           [](missing<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](invalid<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](missing<KaCanOpenUsbOptions>) -> void { SUCCEED(); },
-           [](invalid<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "invalid<KaCanOpenUsbOptions>";
-           },
-           [](missing<UsbSerial>) -> void { FAIL() << "missing<UsbSerial>"; },
-           [](duplicate<NetworkConfig, std::string>) -> void {
-             FAIL() << "duplicate<NetworkConfig, std::string>";
+           [](Networks) -> void { FAIL() << "Networks"; },
+           [](invalid<Networks> in) -> void {
+             EXPECT_EQ(in.reason, "Missing Driver.");
            });
 }
 
-TEST(networks_yaml, wrong_UsbOption) {
+TEST(parseNetwork, wrongUsbOption) {
   auto node = YAML::LoadFile("networks.yaml");
   NetworkVariant nw = node["Network_wrong_UsbOption"].as<NetworkVariant>();
+
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
-           [](Networks nn) -> void { FAIL() << "Networks nn"; },
-           [](missing<Networks>) -> void { FAIL() << "missing<Networks>"; },
-           [](missing<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](invalid<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](missing<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "missing<KaCanOpenUsbOptions>";
-           },
-           [](invalid<KaCanOpenUsbOptions>) -> void { SUCCEED(); },
-           [](missing<UsbSerial>) -> void { FAIL() << "missing<UsbSerial>"; },
-           [](duplicate<NetworkConfig, std::string>) -> void {
-             FAIL() << "duplicate<NetworkConfig, std::string>";
+           [](Networks) -> void { FAIL() << "Networks"; },
+           [](invalid<Networks> in) -> void {
+             EXPECT_EQ(in.reason, "Driver: Not a valid value.");
            });
 }
-TEST(networks_yaml, missing_USBSerial_node) {
+TEST(parseNetwork, missingUsbSerial) {
   auto node = YAML::LoadFile("networks.yaml");
   NetworkVariant nw = node["Network_missing_serial"].as<NetworkVariant>();
+
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
-           [](Networks nn) -> void { FAIL() << "Networks nn"; },
-           [](missing<Networks>) -> void { FAIL() << "missing<Networks>"; },
-           [](missing<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](invalid<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](missing<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "missing<KaCanOpenUsbOptions>";
-           },
-           [](invalid<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "invalid<KaCanOpenUsbOptions>";
-           },
-           [](missing<UsbSerial>) -> void { SUCCEED(); },
-           [](duplicate<NetworkConfig, std::string>) -> void {
-             FAIL() << "duplicate<NetworkConfig, std::string>";
+           [](Networks) -> void { FAIL() << "Networks"; },
+           [](invalid<Networks> in) -> void {
+             EXPECT_EQ(in.reason, "Missing USB Serial.");
            });
 }
 
-TEST(networks_yaml, empty_USBSerial_node) {
+TEST(parseNetwork, emptyUsbSerial) {
   auto node = YAML::LoadFile("networks.yaml");
-
   NetworkVariant nw = node["Network_empty_serial"].as<NetworkVariant>();
+
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
-           [](Networks nn) -> void { FAIL() << "Networks nn"; },
-           [](missing<Networks>) -> void { FAIL() << "missing<Networks>"; },
-           [](missing<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](invalid<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](missing<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "missing<KaCanOpenUsbOptions>";
-           },
-           [](invalid<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "invalid<KaCanOpenUsbOptions>";
-           },
-           [](missing<UsbSerial>) -> void { SUCCEED(); },
-           [](duplicate<NetworkConfig, std::string>) -> void {
-             FAIL() << "duplicate<NetworkConfig, std::string>";
+           [](Networks) -> void { FAIL() << "Networks"; },
+           [](invalid<Networks> in) -> void {
+             EXPECT_EQ(in.reason,
+                       "USB Serial: Value missing or not of type std::string.");
            });
 }
 
-TEST(networks_yaml, duplicateNetwork) {
+TEST(parseNetwork, duplicateNetwork) {
   auto node = YAML::LoadFile("networks.yaml");
   NetworkVariant nw = node["Network_duplicate_network"].as<NetworkVariant>();
+
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
-           [](Networks nn) -> void { FAIL() << "Networks nn"; },
-           [](missing<Networks>) -> void { FAIL() << "missing<Networks>"; },
-           [](missing<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](invalid<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](missing<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "missing<KaCanOpenUsbOptions>";
-           },
-           [](invalid<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "invalid<KaCanOpenUsbOptions>";
-           },
-           [](missing<UsbSerial>) -> void { SUCCEED(); },
-           [](duplicate<NetworkConfig, std::string> dn) -> void {
-             EXPECT_EQ(dn.key, "Left");
+           [](Networks) -> void { FAIL() << "Networks"; },
+           [](invalid<Networks> in) -> void {
+             EXPECT_EQ(in.reason, "Network label is duplicated.");
            });
 }
 
-TEST(networks_yaml, duplicateUsbSerial) {
+TEST(parseNetwork, duplicateUsbSerial) {
   auto node = YAML::LoadFile("networks.yaml");
   NetworkVariant nw = node["Network_duplicate_serial"].as<NetworkVariant>();
 
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
-           [](Networks nn) -> void { FAIL() << "Networks nn"; },
-           [](missing<Networks>) -> void { FAIL() << "missing<Networks>"; },
-           [](missing<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](invalid<KaCanOpenBaudrate>) -> void {
-             FAIL() << "invalid<KaCanOpenBaudrate>";
-           },
-           [](missing<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "missing<KaCanOpenUsbOptions>";
-           },
-           [](invalid<KaCanOpenUsbOptions>) -> void {
-             FAIL() << "invalid<KaCanOpenUsbOptions>";
-           },
-           [](missing<UsbSerial>) -> void { FAIL() << "missing<UsbSerial>"; },
-           [](duplicate<NetworkConfig, std::string> dn) -> void {
-             EXPECT_EQ(dn.key, "Usb Serial");
+           [](Networks) -> void { FAIL() << "Networks"; },
+           [](invalid<Networks> in) -> void {
+             EXPECT_EQ(in.reason, "USB Serial: Serial is duplicated.");
            });
 }
