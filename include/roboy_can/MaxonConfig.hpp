@@ -38,7 +38,7 @@ enum class KaCanOpenBaudrate : unsigned int {
 };
 
 using PositionSensorType =
-    variant<missing<EposPositionSensorType>, invalid<EposPositionSensorType>,
+    variant<empty<EposPositionSensorType>, invalid<EposPositionSensorType>,
             EposPositionSensorType>;
 enum class MotionProfileTypeValue : int16_t {
   LINEAR_RAMP_TRAPEZOIDAL_PROFILE,

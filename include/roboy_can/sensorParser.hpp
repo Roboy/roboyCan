@@ -8,10 +8,7 @@
 #include <numeric>
 
 using SensorVariant =
-    variant<empty<SensorConfig>, missing<SensorConfig>, SensorConfig,
-            invalid<EposPulseNumberIncrementalEncoders>,
-            missing<EposPulseNumberIncrementalEncoders>,
-            invalid<EposPositionSensorType>, missing<EposPositionSensorType>>;
+    variant<empty<SensorConfig>, SensorConfig, invalid<SensorConfig>>;
 
 namespace YAML {
 template <> struct convert<PositionSensorType> {
@@ -45,7 +42,8 @@ template <> struct convert<PositionSensorType> {
       sensor = {EposPositionSensorType::SINUS_INC_ENCODER_2};
       break;
     default:
-      sensor = invalid<EposPositionSensorType>{};
+      sensor = invalid<EposPositionSensorType>{
+          "Position Sensor Type: Not a valid value."};
     }
     return true;
   };
@@ -56,37 +54,56 @@ template <> struct convert<SensorVariant> {
     Node node;
     if (!input_node["Standard Motor Configuration"] ||
         !input_node["Standard Motor Configuration"]["Sensor Configuration"]) {
-      sensor = missing<SensorConfig>{};
+      sensor = invalid<SensorConfig>{"Missing Sensor Configuration."};
       return true;
     } else
       node = input_node["Standard Motor Configuration"]["Sensor Configuration"];
 
     if (!node["Pulse Number Incremental Encoder 1"]) {
-      sensor = missing<EposPulseNumberIncrementalEncoders>{};
+      sensor = invalid<SensorConfig>{
+          "Standard Motor Configuration: "
+          "Sensor Configuration: Missing Pulse Number Incremental Encoder 1."};
       return true;
     }
     if (!node["Position Sensor Type"]) {
-      sensor = missing<EposPositionSensorType>{};
+      sensor = invalid<SensorConfig>{
+          "Standard Motor Configuration: "
+          "Sensor Configuration: Missing Position Sensor Type."};
       return true;
     };
 
-    sensor = withinBounds<EposPulseNumberIncrementalEncoders>(
-                 node, "Pulse Number Incremental Encoder 1", 16, 2500000)
-                 .match(passAlong<invalid<EposPulseNumberIncrementalEncoders>,
-                                  SensorVariant>{},
-                        [&node](EposPulseNumberIncrementalEncoders pulses)
-                            -> SensorVariant {
-                          return node["Position Sensor Type"]
-                              .as<PositionSensorType>()
-                              .match(passAlong<invalid<EposPositionSensorType>,
-                                               SensorVariant>{},
-                                     passAlong<missing<EposPositionSensorType>,
-                                               SensorVariant>{},
-                                     [&pulses](EposPositionSensorType pst)
-                                         -> SensorVariant {
-                                       return {SensorConfig(pulses, pst)};
-                                     });
-                        });
+    sensor =
+        withinBounds<EposPulseNumberIncrementalEncoders>(
+            node, "Pulse Number Incremental Encoder 1", 16, 2500000)
+            .match(
+                [](invalid<EposPulseNumberIncrementalEncoders> in)
+                    -> SensorVariant {
+                  return invalid<SensorConfig>{
+                      std::string("Standard Motor Configuration: "
+                                  "Sensor Configuration: " +
+                                  in.reason)};
+                },
+                [&node](EposPulseNumberIncrementalEncoders pulses)
+                    -> SensorVariant {
+                  return node["Position Sensor Type"]
+                      .as<PositionSensorType>()
+                      .match(
+                          [](empty<EposPositionSensorType>) -> SensorVariant {
+                            return invalid<SensorConfig>{std::string(
+                                "Parsing failed for Position Sensor Type.")};
+                          },
+                          [](invalid<EposPositionSensorType> in)
+                              -> SensorVariant {
+                            return invalid<SensorConfig>{
+                                std::string("Standard Motor Configuration: "
+                                            "Sensor Configuration: " +
+                                            in.reason)};
+                          },
+                          [&pulses](
+                              EposPositionSensorType pst) -> SensorVariant {
+                            return SensorConfig(pulses, pst);
+                          });
+                });
     return true;
   };
 };

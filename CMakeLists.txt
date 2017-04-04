@@ -42,8 +42,8 @@ include_directories(
  add_library(roboy_can
 src/networkParser.cpp
 src/sensorParser.cpp
-src/motorParser.cpp
-src/mainParser.cpp
+#src/motorParser.cpp
+#src/mainParser.cpp
    #src/roboy_can.cpp
   # src/Motors.cpp
  )
@@ -78,8 +78,8 @@ set(TEST_SOURCE_FILES
   test/Main.cpp
   test/ParserNetworkTest.cpp
   test/ParserSensorTest.cpp
-  test/ParserControllerTest.cpp
-  test/ParserMotorsTest.cpp
+  # test/ParserControllerTest.cpp
+  # test/ParserMotorsTest.cpp
 )
 catkin_add_gtest(unit_tests ${TEST_SOURCE_FILES})
 

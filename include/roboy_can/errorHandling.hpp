@@ -24,7 +24,7 @@ variant<invalid<T>, T> withinBounds(YAML::Node nn, std::string key, T lower,
                                     T upper) {
   T vari = nn[key].as<T>();
   if (vari < lower || vari > upper) {
-    return invalid<T>{key};
+    return invalid<T>{key + " : Value out of bounds."};
   }
   return {vari};
 };
