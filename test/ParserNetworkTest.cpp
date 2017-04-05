@@ -10,6 +10,14 @@ TEST(parseNetwork, networks) {
            [](Networks nn) -> void { SUCCEED(); },
            [](invalid<Networks> in) -> void { FAIL() << in.reason; });
 }
+TEST(parseNetwork, networksRoboy) {
+  auto node = YAML::LoadFile("roboy.yaml");
+  NetworkVariant nw = node["Maxon"].as<NetworkVariant>();
+
+  nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
+           [](Networks nn) -> void { SUCCEED(); },
+           [](invalid<Networks> in) -> void { FAIL() << in.reason; });
+}
 TEST(parseNetwork, brokenRoboy) {
   auto node = YAML::LoadFile("broken_roboy.yaml");
   NetworkVariant nw = node["Network"].as<NetworkVariant>();
@@ -55,7 +63,7 @@ TEST(parseNetwork, missingBaudrate) {
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
            [](Networks) -> void { FAIL() << "Networks"; },
            [](invalid<Networks> in) -> void {
-             EXPECT_EQ(in.reason, "Missing Baudrate.");
+             EXPECT_EQ(in.reason, "Network: Right: Missing Baudrate.");
            });
 }
 
@@ -66,7 +74,8 @@ TEST(parseNetwork, wrongBaudrate) {
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
            [](Networks) -> void { FAIL() << "Networks"; },
            [](invalid<Networks> in) -> void {
-             EXPECT_EQ(in.reason, "Baudrate: Not a valid value.");
+             EXPECT_EQ(in.reason,
+                       "Network: Left: Baudrate: Not a valid value.");
            });
 }
 
@@ -77,7 +86,7 @@ TEST(parseNetwork, missingUsbOption) {
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
            [](Networks) -> void { FAIL() << "Networks"; },
            [](invalid<Networks> in) -> void {
-             EXPECT_EQ(in.reason, "Missing Driver.");
+             EXPECT_EQ(in.reason, "Network: Right: Missing Driver.");
            });
 }
 
@@ -88,7 +97,7 @@ TEST(parseNetwork, wrongUsbOption) {
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
            [](Networks) -> void { FAIL() << "Networks"; },
            [](invalid<Networks> in) -> void {
-             EXPECT_EQ(in.reason, "Driver: Not a valid value.");
+             EXPECT_EQ(in.reason, "Network: Left: Driver: Not a valid value.");
            });
 }
 TEST(parseNetwork, missingUsbSerial) {
@@ -98,7 +107,7 @@ TEST(parseNetwork, missingUsbSerial) {
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
            [](Networks) -> void { FAIL() << "Networks"; },
            [](invalid<Networks> in) -> void {
-             EXPECT_EQ(in.reason, "Missing USB Serial.");
+             EXPECT_EQ(in.reason, "Network: Right: Missing USB Serial.");
            });
 }
 
@@ -109,8 +118,8 @@ TEST(parseNetwork, emptyUsbSerial) {
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
            [](Networks) -> void { FAIL() << "Networks"; },
            [](invalid<Networks> in) -> void {
-             EXPECT_EQ(in.reason,
-                       "USB Serial: Value missing or not of type std::string.");
+             EXPECT_EQ(in.reason, "Network: Right: USB Serial: Value missing "
+                                  "or not of type std::string.");
            });
 }
 
@@ -121,7 +130,8 @@ TEST(parseNetwork, duplicateNetwork) {
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
            [](Networks) -> void { FAIL() << "Networks"; },
            [](invalid<Networks> in) -> void {
-             EXPECT_EQ(in.reason, "Network label is duplicated.");
+             EXPECT_EQ(in.reason,
+                       "Network: Left: Network label is duplicated.");
            });
 }
 
@@ -132,6 +142,7 @@ TEST(parseNetwork, duplicateUsbSerial) {
   nw.match([](empty<Networks>) -> void { FAIL() << "empty<Networks>"; },
            [](Networks) -> void { FAIL() << "Networks"; },
            [](invalid<Networks> in) -> void {
-             EXPECT_EQ(in.reason, "USB Serial: Serial is duplicated.");
+             EXPECT_EQ(in.reason,
+                       "Network: Right: USB Serial: Serial is duplicated.");
            });
 }

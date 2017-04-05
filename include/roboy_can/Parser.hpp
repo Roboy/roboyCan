@@ -63,8 +63,8 @@ template <> struct convert<SensorVariant> {
 };
 
 using ControllersVariant =
-    variant<empty<MaxonControllers>, missing<MaxonParameter>,
-            invalid<MaxonParameter>, RoboyParserErrorMissingEntry,
+    variant<empty<MaxonControllers>, missing<MaxonParameterVariant>,
+            invalid<MaxonParameterVariant>, RoboyParserErrorMissingEntry,
             MaxonControllers>;
 
 template <> struct convert<ControllersVariant> {

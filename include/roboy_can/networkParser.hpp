@@ -134,22 +134,38 @@ template <> struct convert<NetworkVariant> {
     }
     Node newnode = node["Network"];
     std::unordered_set<std::string> serials;
-    network = std::accumulate(
-        newnode.begin(), newnode.end(), NetworkVariant{},
-        [&serials](NetworkVariant nw, YAML::const_iterator::value_type subnet) {
-          return nw.match(
-              [&subnet, &serials](empty<Networks>) -> NetworkVariant {
-                return growNetwork(Networks{}, subnet, serials);
-              },
-              [&subnet, &serials](Networks previous) -> NetworkVariant {
-                return growNetwork(previous, subnet, serials);
-              },
-              [&subnet](invalid<Networks> in) -> NetworkVariant {
-                return invalid<Networks>(std::string("Network: ") +
-                                         subnet.first.as<std::string>() + ": " +
-                                         in.reason);
-              });
-        });
+    std::string networkName;
+    network =
+        std::accumulate(
+            newnode.begin(), newnode.end(), NetworkVariant{},
+            [&serials, &networkName](NetworkVariant nw,
+                                     YAML::const_iterator::value_type subnet) {
+              return nw.match(
+                  [&subnet, &serials,
+                   &networkName](empty<Networks>) -> NetworkVariant {
+                    networkName = subnet.first.as<std::string>();
+                    return growNetwork(Networks{}, subnet, serials);
+                  },
+                  [&subnet, &serials,
+                   &networkName](Networks previous) -> NetworkVariant {
+                    networkName = subnet.first.as<std::string>();
+                    return growNetwork(previous, subnet, serials);
+                  },
+                  [&subnet](invalid<Networks> in) -> NetworkVariant {
+                    return invalid<Networks>(std::string("Network: ") +
+                                             subnet.first.as<std::string>() +
+                                             ": " + in.reason);
+                  });
+            })
+            .match(
+                [](empty<Networks>) -> NetworkVariant {
+                  return invalid<Networks>{"Parsing failed for Networks."};
+                },
+                [&networkName](invalid<Networks> in) -> NetworkVariant {
+                  return invalid<Networks>{std::string("Network: ") +
+                                           networkName + ": " + in.reason};
+                },
+                [](Networks in) -> NetworkVariant { return in; });
     return true;
   }
 };

@@ -15,56 +15,73 @@ struct CanIdNetworktuple {
   std::string network;
 };
 
-using motorNames = std::map<std::string, CanIdNetworktuple>;
-using motorNamesVariant =
-    variant<empty<motorNames>, motorNames, missing<motorNames>,
-            duplicate<CanIdNetworktuple, std::string>>;
+using MotorNames = std::map<std::string, CanIdNetworktuple>;
+using MotorNamesVariant =
+    variant<empty<MotorNames>, invalid<MotorNames>, MotorNames>;
 using MotorConfigVariant =
-    variant<empty<MotorConfigs>, MotorConfigs, invalid<MotorConfig>,
-            NetworkVariant, SensorVariant, motorNamesVariant>;
+    variant<empty<MotorConfigs>, invalid<MotorConfigs>, MotorConfigs>;
+
 // todo: Add MotorConfigvariant options
 
-inline auto growMotorNames(motorNames previous,
+inline auto growMotorNames(MotorNames previous,
                            YAML::const_iterator::value_type subnet)
-    -> motorNamesVariant {
+    -> MotorNamesVariant {
   std::set<unsigned int> unique;
 
   for (auto &mname : subnet.second) {
-    CanIdNetworktuple tuple = {mname.first.as<unsigned int>(),
-                               subnet.first.as<std::string>()};
+    CanIdNetworktuple tuple;
+    try {
+      tuple = {mname.first.as<unsigned int>(), subnet.first.as<std::string>()};
+    } catch (const YAML::BadConversion &e) {
+      return invalid<MotorNames>{
+          "Motors: Values are missing or are not of type unsigned int or "
+          "std::string respectively."};
+    }
 
     if (unique.emplace(tuple.canId).second == false) {
-      std::stringstream temp;
-      temp << tuple.network << ": " << tuple.canId;
-      return duplicate<CanIdNetworktuple, std::string>{temp.str()};
+      return invalid<MotorNames>{
+          std::string("Duplicate CAN ID: " + tuple.network + ": " +
+                      std::to_string(tuple.canId) + ".")};
     }
-    previous[mname.second["id"].as<std::string>()] = tuple;
+    try {
+      previous[mname.second["id"].as<std::string>()] = tuple;
+    } catch (const YAML::BadConversion &e) {
+      return invalid<MotorNames>{
+          "Motors: ID Values are missing or are not of type unsigned int"};
+    }
   }
   return {previous};
 };
 
 namespace YAML {
-template <> struct convert<motorNamesVariant> {
-  static bool decode(Node const &node, motorNamesVariant &names) {
+template <> struct convert<MotorNamesVariant> {
+  static bool decode(Node const &node, MotorNamesVariant &names) {
     if (!node["Motors"]) {
-      names = missing<motorNames>();
+      names = invalid<MotorNames>{"Missing Motor names."};
       return true;
     }
     Node motorNode = node["Motors"];
-    names = std::accumulate(
-        motorNode.begin(), motorNode.end(), motorNamesVariant{},
-        [](motorNamesVariant nms, YAML::const_iterator::value_type subnet) {
-          return nms.match(
-              [&subnet](empty<motorNames>) -> motorNamesVariant {
-                return growMotorNames(motorNames{}, subnet);
-              },
-              [&subnet](motorNames previous) -> motorNamesVariant {
-                return growMotorNames(previous, subnet);
-              },
-              passAlong<missing<motorNames>, motorNamesVariant>{},
-              passAlong<duplicate<CanIdNetworktuple, std::string>,
-                        motorNamesVariant>{});
-        });
+    names =
+        std::accumulate(
+            motorNode.begin(), motorNode.end(), MotorNamesVariant{},
+            [](MotorNamesVariant nms, YAML::const_iterator::value_type subnet) {
+              return nms.match(
+                  [&subnet](empty<MotorNames>) -> MotorNamesVariant {
+                    return growMotorNames(MotorNames{}, subnet);
+                  },
+                  [&subnet](invalid<MotorNames> in) -> MotorNamesVariant {
+                    return in;
+                  },
+                  [&subnet](MotorNames previous) -> MotorNamesVariant {
+                    return growMotorNames(previous, subnet);
+                  });
+            })
+            .match([](empty<MotorNames> in) -> MotorNamesVariant { return in; },
+                   [](invalid<MotorNames> in) -> MotorNamesVariant {
+                     return invalid<MotorNames>{
+                         std::string("Motors: " + in.reason)};
+                   },
+                   [](MotorNames in) -> MotorNamesVariant { return in; });
     return true;
   };
 };
@@ -73,25 +90,44 @@ using MCV = MotorConfigVariant;
 template <> struct convert<MotorConfigVariant> {
   static bool decode(Node const &node, MCV &motorConfig) {
     motorConfig = node.as<NetworkVariant>().match(
-        [](empty<Networks> n) -> MCV { passAlong<empty<Networks>, MCV>{}; },
+        [](empty<Networks>) -> MCV {
+          return invalid<MotorConfigs>{"Parsing failed for Networks"};
+        },
+        [](invalid<Networks> in) -> MCV {
+          return invalid<MotorConfigs>{in.reason};
+        },
         [&node](Networks nn) -> MCV { // next level
           return node.as<SensorVariant>().match(
-              passAlong<empty<SensorConfig>, MCV>{},
-              passAlong<missing<SensorConfig>, MCV>{},
+              [](empty<SensorConfig>) -> MCV {
+                return invalid<MotorConfigs>{"Parsing failed for Sensors"};
+              },
+              [](invalid<SensorConfig> in) -> MCV {
+                return invalid<MotorConfigs>{in.reason};
+              },
               [&node, &nn](SensorConfig sc) -> MCV { // next level
                 return node.as<ControllersVariant>().match(
                     [](empty<MaxonControllers>) -> MCV {
-                      passAlong<empty<MaxonControllers>, MCV>{};
+                      return invalid<MotorConfigs>{
+                          "Parsing failed for Controllers"};
+                    },
+                    [](invalid<MaxonControllers> in) -> MCV {
+                      return invalid<MotorConfigs>{in.reason};
                     },
                     [&node, &nn, &sc](MaxonControllers mcs) -> MCV {
-                      return node.as<motorNamesVariant>().match(
-                            passAlong<empty<motorNames>, MCV>{}
-                          ,
-                          [&nn, &sc, &mcs](motorNames mn) -> MCV {
+                      return node.as<MotorNamesVariant>().match(
+                          [](empty<MotorNames>) -> MCV {
+                            return invalid<MotorConfigs>{
+                                "Parsing failed for Motors"};
+                          },
+                          [](invalid<MotorNames> in) -> MCV {
+                            return invalid<MotorConfigs>{
+                                std::string("Motors: " + in.reason)};
+                          },
+                          [&nn, &sc, &mcs](MotorNames mn) -> MCV {
                             MotorConfigs motors;
                             for (auto &motor : mn) {
                               if (nn.find(motor.second.network) == nn.end()) {
-                                return invalid<MotorConfig>{
+                                return invalid<MotorConfigs>{
                                     motor.first}; // Should mean: invalid
                                 // network configuration on
                                 // motorname motor.first
@@ -103,59 +139,10 @@ template <> struct convert<MotorConfigVariant> {
                                               mcs});
                             }
                             return motors;
-                          },
-                          passAlong<missing<motorNames>, MCV>{},
-                          passAlong<duplicate<CanIdNetworktuple, std::string>,
-                                    MCV>{});
-                    },
-                    [](missing<MaxonControllers>) -> MCV {
-                      passAlong<missing<MaxonControllers>, MCV>{};
-                    },
-                    [](empty<MaxonParameterList>) -> MCV {
-                      passAlong<empty<MaxonParameterList>, MCV>{};
-                    },
-                    [](missing<MaxonParameterList>) -> MCV {
-                      passAlong<missing<MaxonParameterList>, MCV>{};
-                    },
-                    [](missing<uint32_t>) -> MCV {
-                      passAlong<missing<uint32_t>, MCV>{};
-                    },
-                    [](invalid<uint32_t>) -> MCV {
-                      passAlong<invalid<uint32_t>, MCV>{};
-                    },
-                    [](missing<int32_t>) -> MCV {
-                      passAlong<missing<int32_t>, MCV>{};
-                    },
-                    [](invalid<int32_t>) -> MCV {
-                      passAlong<invalid<int32_t>, MCV>{};
-                    },
-                    [](empty<MotionProfileTypeValue>) -> MCV {
-                      passAlong<empty<MotionProfileTypeValue>, MCV>{};
-                    },
-                    [](missing<MotionProfileTypeValue>) -> MCV {
-                      passAlong<missing<MotionProfileTypeValue>, MCV>{};
-                    },
-                    [](invalid<MotionProfileTypeValue>) -> MCV {
-                      passAlong<invalid<MotionProfileTypeValue>, MCV>{};
-                    },
-                    [](duplicate<MaxonControllerConfig, std::string>) -> MCV {
-                      passAlong<duplicate<MaxonControllerConfig, std::string>,
-                                MCV>{};
+                          });
                     });
-              },
-              passAlong<invalid<EposPulseNumberIncrementalEncoders>, MCV>{},
-              passAlong<missing<EposPulseNumberIncrementalEncoders>, MCV>{},
-              passAlong<invalid<EposPositionSensorType>, MCV>{},
-              passAlong<missing<EposPositionSensorType>, MCV>{},
-              passAlong<invalid<KaCanOpenUsbOptions>, MCV>{});
-        },
-        passAlong<missing<Networks>, MCV>{},
-        passAlong<missing<KaCanOpenBaudrate>, MCV>{},
-        passAlong<invalid<KaCanOpenBaudrate>, MCV>{},
-        passAlong<missing<KaCanOpenUsbOptions>, MCV>{},
-        passAlong<invalid<KaCanOpenUsbOptions>, MCV>{},
-        passAlong<missing<UsbSerial>, MCV>{},
-        passAlong<duplicate<NetworkConfig, std::string>, MCV>{});
+              });
+        });
     return true;
   };
 };
