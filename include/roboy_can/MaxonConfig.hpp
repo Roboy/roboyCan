@@ -4,6 +4,36 @@
 #include "roboy_can/errorHandling.hpp"
 #include <map>
 #include <vector>
+struct PositionConfig {
+  int32_t minPositionLimit;
+  int32_t maxPositionLimit;
+};
+using PositionConfigVariant =
+    variant<empty<PositionConfig>, invalid<PositionConfig>, PositionConfig>;
+
+struct VelocityConfig {
+  uint32_t maxProfileVelocity;
+  uint32_t profileVelocity;
+};
+using VelocityConfigVariant =
+    variant<empty<VelocityConfig>, invalid<VelocityConfig>, VelocityConfig>;
+
+struct AccelerationConfig {
+  uint32_t maxAcceleration;
+  uint32_t profileAcceleration;
+  uint32_t profileDeceleration;
+  uint32_t quickstopDeceleration;
+};
+using AccelerationConfigVariant =
+    variant<empty<AccelerationConfig>, invalid<AccelerationConfig>,
+            AccelerationConfig>;
+
+struct MaxFollowingErrorConfig {
+  uint32_t maxFollowingError;
+};
+using MaxFollowingErrorConfigVariant =
+    variant<empty<MaxFollowingErrorConfig>, invalid<MaxFollowingErrorConfig>,
+            MaxFollowingErrorConfig>;
 
 using EposPulseNumberIncrementalEncoders = uint32_t;
 enum class EposPositionSensorType : uint16_t {
@@ -19,9 +49,9 @@ enum class EposPositionSensorType : uint16_t {
   SINUS_INC_ENCODER_2
 };
 
-using MaxonParameter = variant<int16_t, uint16_t, int32_t, uint32_t>;
+using MaxonParameterVariant = variant<int16_t, uint16_t, int32_t, uint32_t>;
 
-using MaxonParameterList = std::map<std::string, MaxonParameter>;
+using MaxonParameterList = std::map<std::string, MaxonParameterVariant>;
 
 enum class KaCanOpenUsbOptions { USBTIN, PEAK };
 
@@ -40,10 +70,14 @@ enum class KaCanOpenBaudrate : unsigned int {
 using PositionSensorType =
     variant<empty<EposPositionSensorType>, invalid<EposPositionSensorType>,
             EposPositionSensorType>;
-enum class MotionProfileTypeValue : int16_t {
+
+enum class MotionProfileType : int16_t {
   LINEAR_RAMP_TRAPEZOIDAL_PROFILE,
   SIN2_RAMP_SINUSOIDAL_PROFILE
 };
+using MotionProfileTypeVariant =
+    variant<empty<MotionProfileType>, invalid<MotionProfileType>,
+            MotionProfileType>;
 
 class SensorConfig {
 public:
@@ -57,7 +91,7 @@ public:
 
   inline MaxonParameterList getParameterList(void) { return parameters_; };
 
-  inline MaxonParameter getParameter(std::string name) {
+  inline MaxonParameterVariant getParameter(std::string name) {
     return parameters_.at(name);
   };
 
@@ -67,52 +101,39 @@ private:
 
 class ProfilePositionModeConfig {
 public:
-  ProfilePositionModeConfig() = default;
-  inline ProfilePositionModeConfig(MaxonParameterList &&pms) {
-    parameters_ = std::move(pms);
-  };
-  inline ProfilePositionModeConfig(uint32_t &&mfev, MaxonParameterList &&plv,
-                                   MaxonParameterList &&vel,
-                                   MaxonParameterList &&acc,
-                                   MotionProfileTypeValue &&mpt) {
-    parameters_["Max Following Error"] = {std::move(mfev)};
-    for (auto &it : plv) {
-      parameters_[it.first] = it.second;
-    }
-    for (auto &it : vel) {
-      parameters_[it.first] = it.second;
-    }
-    for (auto &it : acc) {
-      parameters_[it.first] = it.second;
-    }
-    parameters_["Motion Profile Type"] = {static_cast<int16_t>(std::move(mpt))};
-  };
+  inline ProfilePositionModeConfig(MaxFollowingErrorConfig mfeIn,
+                                   PositionConfig plvIn, VelocityConfig velIn,
+                                   AccelerationConfig accIn,
+                                   MotionProfileType mptIn)
+      : mfe{std::move(mfeIn)}, pcfg{std::move(plvIn)}, vcfg{std::move(velIn)},
+        acfg{std::move(accIn)}, mpt{std::move(mptIn)} {};
 
   const std::string type = "Profile Position Mode";
-  inline MaxonParameterList getParameterList(void) { return parameters_; };
-  inline MaxonParameter getParameter(std::string name) {
-    return (parameters_.at(name));
-  };
-  inline void setParameter(std::string name, MaxonParameter mp) {
-    parameters_[name] = {mp};
+  inline auto getParameterList(void) -> MaxonParameterList {
+    return {{"Max Following Error", uint32_t(mfe.maxFollowingError)},
+            {"Min Position Limit", int32_t(pcfg.minPositionLimit)},
+            {"Max Position Limit", int32_t(pcfg.maxPositionLimit)},
+            {"Max Profile Velocity", uint32_t(vcfg.maxProfileVelocity)},
+            {"Profile Velocity", uint32_t(vcfg.profileVelocity)},
+            {"Max Acceleration", uint32_t(acfg.maxAcceleration)},
+            {"Profile Acceleration", uint32_t(acfg.profileAcceleration)},
+            {"Profile Deceleration", uint32_t(acfg.profileDeceleration)},
+            {"Quickstop Deceleration", uint32_t(acfg.quickstopDeceleration)},
+            {"Motion Profile Type", int16_t(mpt)}};
   };
 
 private:
-  MaxonParameterList parameters_ = {
-      {"Max Following Error", uint32_t(2000)},
-      {"Min Position Limit", int32_t(-2147483648)},
-      {"Max Position Limit", int32_t(2147483648)},
-      {"Max Profile Velocity", uint32_t(25000)},
-      {"Profile Velocity", uint32_t(1000)},
-      {"Profile Acceleration", uint32_t(10000)},
-      {"Profile Deceleration", uint32_t(10000)},
-      {"Quickstop Deceleration", uint32_t(10000)},
-      {"Motion Profile Type", int16_t(25000)}};
+  MaxFollowingErrorConfig mfe;
+  PositionConfig pcfg;
+  VelocityConfig vcfg;
+  AccelerationConfig acfg;
+  MotionProfileType mpt;
 };
 
 using MaxonControllerConfig = variant<ProfilePositionModeConfig>;
 using MaxonControllers = std::map<std::string, MaxonControllerConfig>;
-
+using ControllersVariant = variant<empty<MaxonControllers>,
+                                   invalid<MaxonControllers>, MaxonControllers>;
 class NetworkConfig {
 public:
   NetworkConfig() = default;

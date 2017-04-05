@@ -22,7 +22,13 @@ template <typename Case, typename Variant> struct passAlong {
 template <typename T>
 variant<invalid<T>, T> withinBounds(YAML::Node nn, std::string key, T lower,
                                     T upper) {
-  T vari = nn[key].as<T>();
+  T vari;
+  try {
+    vari = nn[key].as<T>();
+  } catch (const YAML::BadConversion &e) {
+    return invalid<T>{key +
+                      "Value missing or (unlikely: ) not of correct type."};
+  }
   if (vari < lower || vari > upper) {
     return invalid<T>{key + " : Value out of bounds."};
   }
