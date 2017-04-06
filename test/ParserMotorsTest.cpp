@@ -41,6 +41,18 @@ TEST(parseEverything, success) {
       [](invalid<MotorConfigs> in) -> void { FAIL() << in.reason; },
       [](MotorConfigs mn) -> void { SUCCEED(); });
 }
+
+TEST(parseEverything, baudrate) {
+  auto const node = YAML::LoadFile("roboy.yaml");
+  node["Maxon"].as<MotorConfigVariant>().match(
+      [](empty<MotorConfigs>) -> void { FAIL() << "empty<MotorConfig>"; },
+      [](invalid<MotorConfigs> in) -> void { FAIL() << in.reason; },
+      [](MotorConfigs mn) -> void {
+        KaCanOpenBaudrate temp = mn.at("BriskBugs").network.getBaudrate();
+        EXPECT_EQ(temp, KaCanOpenBaudrate::Baud1M);
+      });
+}
+
 TEST(parseEverything, duplicateSerial) {
   auto const node = YAML::LoadFile("roboy_duplicate_serial.yaml");
   node["Maxon"].as<MotorConfigVariant>().match(
