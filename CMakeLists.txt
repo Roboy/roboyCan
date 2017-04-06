@@ -44,7 +44,6 @@ src/networkParser.cpp
 src/sensorParser.cpp
 src/controllerParser.cpp
 src/motorParser.cpp
-#src/mainParser.cpp
    #src/roboy_can.cpp
   # src/Motors.cpp
  )
