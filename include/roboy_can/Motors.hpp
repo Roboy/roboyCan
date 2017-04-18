@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <set>
 
-namespace Maxon {
 enum class ControlMode : int { Raw, Torque, Velocity, Position, Force };
 
 enum class CommandResult : int {
@@ -57,10 +56,11 @@ enum class Epos2Status {
 class EPOSCommand {
 public:
   EPOSCommand(std::string jn, Epos2ControlMode cm, signed int sp)
-      : jointName(jn), controlMode(cm), setpoint(sp);
-  std::string getJointName(){return jointName};
-  Epos2ControlMode getControlMode(){return controlMode};
-  signed int getSetpoint(){return setpoint};
+      : jointName(jn), controlMode(cm), setpoint(sp){};
+
+  std::string getJointName() { return jointName; };
+  Epos2ControlMode getControlMode() { return controlMode; };
+  signed int getSetpoint() { return setpoint; };
 
 private:
   std::string jointName;
@@ -101,7 +101,6 @@ private:
 
   RoboyMotor(kaco::Master &master, MotorConfig &&config);
 
-  std::reference_wrapper<kaco::Device> motor_;
+  kaco::Device motor_;
   MotorConfig config_;
 };
-} // end of namespace Maxon

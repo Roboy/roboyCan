@@ -7,6 +7,7 @@
 #include "logger.h"
 #include "master.h"
 
+#include "Motors.hpp"
 #include <map>
 #include <vector>
 
@@ -28,13 +29,15 @@ public:
 
   canRoboy(canRoboy &&) = default;
   canRoboy &operator=(canRoboy &&) = default;
-  static auto connect(kaco::Device &&motor, MotorConfig &&robcof)
-      -> variant<canRoboy, std::pair<MotorConfig, FtResult>>;
+  static auto connect(kaco::Master &master, MotorConfigs &&roboyConfigs)
+      -> variant<canRoboy, std::pair<MotorConfigs, RoboyCanStatus>>;
 
 private:
+  canRoboy(kaco::Master &master, MotorConfigs &&roboyConfigs);
   std::vector<std::string> getJointNames(void);
   void configureNodes(void);
-  void initialise(std::string busname = "slcan0", std::string baudrate = "1M");
+  // void initialise(std::string busname = "slcan0", std::string baudrate =
+  // "1M");
 
   unsigned int getCanAddress(std::string jointName);
 
@@ -45,7 +48,7 @@ private:
   void setupMotor(std::string JointName);
   void PDO_setup(std::string JointName);
 
-  kaco::Master master_;
+  kaco::Master *master_;
 
   std::map<unsigned int, kaco::Device &> deviceVector_;
   std::map<std::string, unsigned int> jointCanMap_;

@@ -13,8 +13,8 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  #kacanopen
-  #std_msgs
+  kacanopen
+  std_msgs
 
 )
 # Boost
@@ -27,7 +27,7 @@ find_package ( yaml-cpp REQUIRED )
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES roboy_can
-  CATKIN_DEPENDS # kacanopen std_msgs std_srvs
+  CATKIN_DEPENDS kacanopen std_msgs std_srvs
   DEPENDS Mapbox Boost YAML_CPP
 )
 
@@ -44,7 +44,7 @@ src/networkParser.cpp
 src/sensorParser.cpp
 src/controllerParser.cpp
 src/motorParser.cpp
-   #src/roboy_can.cpp
+src/roboy_can.cpp
   # src/Motors.cpp
  )
 
