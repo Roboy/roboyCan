@@ -18,8 +18,7 @@ enum class Epos2ControlMode {
   PROFILE_POSITION_RELATIVE_IMMEDIATELY,
   VELOCITY,
   CURRENT,
-  FORCE,
-
+  FORCE
 };
 
 enum class RoboyMotorCommandStatus {
@@ -53,6 +52,9 @@ enum class Epos2Status {
   REFRESH_CYCLE_OF_POWER_STAGE,
   POSITION_REFERENCED_TO_HOME_POSITION
 };
+using CanMotorConfig = variant<std::reference_wrapper<kaco::Device>,
+                               std::pair<RoboyMotorCommandStatus, MotorConfig>>;
+
 class EPOSCommand {
 public:
   EPOSCommand(std::string jn, Epos2ControlMode cm, signed int sp)
@@ -72,26 +74,28 @@ class RoboyMotor {
 public:
   RoboyMotorCommandStatus moveMotor(Epos2ControlMode &&controlMode,
                                     double &&setpoint);
-  double getPosition(void) { return motor_.get_entry("Position Actual Value"); }
-  double getCurrent(void) { return motor_.get_entry("Current Demand Value"); }
-  auto getStatus(void)
+  inline double getPosition(void) {
+    return motor_.get().get_entry("Position Actual Value");
+  }
+  inline double getCurrent(void) {
+    return motor_.get().get_entry("Current Demand Value");
+  }
+  inline auto getStatus(void)
       -> variant<std::set<Epos2Status &&>,
                  std::pair<RoboyMotorCommandStatus, std::set<Epos2Status> &&>>;
   RoboyMotorCommandStatus resetFault(CachedWrite &&useCache);
 
   RoboyMotor(RoboyMotor &&) = default;
   RoboyMotor &operator=(RoboyMotor &&) = default;
-
-  static auto connect(kaco::Master &master, MotorConfig &&config)
+  virtual ~RoboyMotor();
+  static auto connect(std::reference_wrapper<kaco::Master> master,
+                      MotorConfig motorConfig)
       -> variant<RoboyMotor, std::pair<RoboyMotorCommandStatus, MotorConfig>>;
 
-  virtual ~RoboyMotor();
-
 private:
-  Epos2ControlMode activeController_;
-  static auto setupMotor(kaco::Master &master, MotorConfig &&config)
-      -> variant<std::pair<kaco::Master, MotorConfig>,
-                 std::pair<RoboyMotorCommandStatus, MotorConfig>>;
+  RoboyMotor(std::reference_wrapper<kaco::Device> device, MotorConfig config);
+  static auto setupMotor(std::reference_wrapper<kaco::Master> master,
+                         MotorConfig config) -> CanMotorConfig;
 
   RoboyMotorCommandStatus
   writeMotorModeProfilePositionAbsoluteImmediately(double &&setpoint,
@@ -99,8 +103,7 @@ private:
   RoboyMotorCommandStatus enableDevice(CachedWrite &&useCache);
   RoboyMotorCommandStatus setParameters(Epos2ControlMode &&controlMode);
 
-  RoboyMotor(kaco::Master &master, MotorConfig &&config);
-
-  kaco::Device motor_;
+  Epos2ControlMode activeController_;
+  std::reference_wrapper<kaco::Device> motor_;
   MotorConfig config_;
 };

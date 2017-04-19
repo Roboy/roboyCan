@@ -147,6 +147,7 @@ public:
   inline KaCanOpenUsbOptions getDriver(void) { return driver_; };
   inline KaCanOpenBaudrate getBaudrate(void) { return baudrate_; };
   inline std::string getUsbSerial(void) { return usbSerialNumber_; };
+  inline std::string getNetworkName(void) { return yamlTag_; };
 
 private:
   KaCanOpenUsbOptions driver_;
@@ -170,4 +171,11 @@ class RoboyConfig {
 public:
   RoboyConfig() = default;
   MotorConfigs configs;
+  inline auto getNetworks(void) -> std::set<std::string> {
+    std::set<std::string> networkSet;
+    for (auto &motor : configs) {
+      networkSet.emplace(motor.second.network.getNetworkName());
+    }
+    return networkSet;
+  };
 };

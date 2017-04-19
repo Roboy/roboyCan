@@ -1,23 +1,38 @@
 #include "roboy_can/roboy_can.hpp"
 #define MAXONMOTORTICK_IN_RAD 4318.828535741
-using failedCanRoboy = std::pair<MotorConfigs, RoboyCanStatus>;
 
-auto canRoboy::connect(kaco::Master &master, MotorConfigs &&roboyConfigs)
+auto canRoboy::connect(masterMap kacanMasters, RoboyConfig &&roboyConfigs)
     -> variant<canRoboy, failedCanRoboy> {
 
-  // if (master.start(roboyConfigs.bus, roboyConfigs.baudrate)) {
-  if (master.start("slcan0", "1M")) {
-    return canRoboy(master, std::move(roboyConfigs));
-  } else {
-    return failedCanRoboy{std::make_pair(std::move(roboyConfigs),
-                                         RoboyCanStatus::CONNECTION_FAILED)};
+  for (auto &master : roboyConfigs.getNetworks()) {
+    try {
+      if (!kacanMasters.at(master).get().start(
+              "slcan0",
+              "1M")) { // todo: take can info from
+        // configuration different can
+        // networks
+        return failedCanRoboy{std::make_pair(
+            std::move(roboyConfigs), RoboyCanStatus::CONNECTION_FAILED)};
+      }
+    } catch (std::out_of_range &e) {
+      std::cout << "RoboyCan Error - Missmatch between masterMap and map of "
+                   "masters in yaml file.: "
+                << e.what() << std::endl;
+      return failedCanRoboy{std::make_pair(std::move(roboyConfigs),
+                                           RoboyCanStatus::CONNECTION_FAILED)};
+    }
   }
+  // if (configureNodes(masters, roboyConfigs.configs)) {
+  //   return canRoboy(masters, std::move(roboyConfigs.configs));
+  // } else {
+  //   return failedCanRoboy{std::make_pair(std::move(roboyConfigs),
+  //                                        RoboyCanStatus::CONNECTION_FAILED)};
+  // }
 }
 
-canRoboy::canRoboy(kaco::Master &canMaster, MotorConfigs &&roboyConfigs) {
+canRoboy::canRoboy(masterMap canMasters, MotorConfigs &&motorConfigs) {
   std::cout << "Configuring Nodes" << std::endl;
-  master_ = &canMaster;
-  configureNodes();
+  master_ = canMasters;
 }
 // canRoboy::initialise(std::string busname, std::string baudrate)
 //     ->variant<kaco::Master, RoboyCanStatus> {
@@ -56,19 +71,21 @@ canRoboy::canRoboy(kaco::Master &canMaster, MotorConfigs &&roboyConfigs) {
  * @method configureNodes
  * @param  filename       [description]
  */
-void canRoboy::configureNodes(void) {
-  std::vector<std::string> joint_names;
-  joint_names = getJointNames();
-  findNodes(joint_names);
-  master_->core.nmt.reset_all_nodes();
-  for (std::string joint : joint_names) {
-    std::cout << "Motor: " << joint << std::endl;
-#define PROFILEPOSIITONMODE 1
-    controlMode_[getCanAddress(joint)] = PROFILEPOSIITONMODE;
-    setupMotor(joint);
-    PDO_setup(joint);
-  }
-}
+// bool canRoboy::configureNodes(masterMap masters, MotorConfigs motorConfigs) {
+//
+//   for (auto &muscle : motorConfigs) {
+//   }
+//   // master_->core.nmt.reset_all_nodes();
+//   for (std::string joint : joint_names) {
+//     std::cout << "Motor: " << joint << std::endl;
+// #define PROFILEPOSIITONMODE 1
+//     controlMode_[getCanAddress(joint)] = PROFILEPOSIITONMODE;
+//     setupMotor(joint);
+//     PDO_setup(joint);
+//   }
+//   return true;
+//   // todo:  return non true if something goes wrong...
+// }
 
 /**
  * [canRoboy::enable_current_mode description]
