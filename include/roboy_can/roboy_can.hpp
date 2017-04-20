@@ -11,7 +11,7 @@
 #include <map>
 #include <vector>
 using masterMap = std::map<std::string, std::reference_wrapper<kaco::Master>>;
-
+using motorMap = std::map<std::string, RoboyMotor>;
 enum class RoboyCanStatus {
   OK,
   CONNECTION_FAILED,
@@ -30,8 +30,8 @@ public:
       -> variant<canRoboy, failedCanRoboy>;
 
 private:
-  canRoboy(masterMap canMasters, MotorConfigs &&roboyConfigs);
+  canRoboy(masterMap canMasters, motorMap &&motors);
 
   masterMap master_;
-  std::map<std::string, RoboyMotor> motorsCan_;
+  motorMap motorsCan_;
 };

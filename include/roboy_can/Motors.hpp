@@ -52,8 +52,10 @@ enum class Epos2Status {
   REFRESH_CYCLE_OF_POWER_STAGE,
   POSITION_REFERENCED_TO_HOME_POSITION
 };
-using CanMotorConfig = variant<std::reference_wrapper<kaco::Device>,
-                               std::pair<RoboyMotorCommandStatus, MotorConfig>>;
+using unintMotor = std::pair<RoboyMotorCommandStatus, MotorConfig>;
+
+using CanMotorConfig =
+    variant<std::reference_wrapper<kaco::Device>, unintMotor>;
 
 class EPOSCommand {
 public:
@@ -72,6 +74,7 @@ private:
 
 class RoboyMotor {
 public:
+  inline std::string getName() { return config_.name; };
   RoboyMotorCommandStatus moveMotor(Epos2ControlMode &&controlMode,
                                     double &&setpoint);
   inline double getPosition(void) {
@@ -90,7 +93,7 @@ public:
   virtual ~RoboyMotor();
   static auto connect(std::reference_wrapper<kaco::Master> master,
                       MotorConfig motorConfig)
-      -> variant<RoboyMotor, std::pair<RoboyMotorCommandStatus, MotorConfig>>;
+      -> variant<RoboyMotor, unintMotor>;
 
 private:
   RoboyMotor(std::reference_wrapper<kaco::Device> device, MotorConfig config);

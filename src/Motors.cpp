@@ -3,7 +3,6 @@
 #include "sdo_error.h"
 #include <iostream>
 
-using unintMotor = std::pair<RoboyMotorCommandStatus, MotorConfig>;
 auto RoboyMotor::connect(std::reference_wrapper<kaco::Master> master,
                          MotorConfig config)
     -> variant<RoboyMotor, unintMotor> {

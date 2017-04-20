@@ -4,6 +4,7 @@
 auto canRoboy::connect(masterMap kacanMasters, RoboyConfig &&roboyConfigs)
     -> variant<canRoboy, failedCanRoboy> {
 
+  // start the masters
   for (auto &master : roboyConfigs.getNetworks()) {
     try {
       if (!kacanMasters.at(master).get().start(
@@ -22,6 +23,30 @@ auto canRoboy::connect(masterMap kacanMasters, RoboyConfig &&roboyConfigs)
                                            RoboyCanStatus::CONNECTION_FAILED)};
     }
   }
+  motorMap motorsCan;
+  unintMotor uninitialisedMotors;
+
+  for (auto &muscle : roboyConfigs.configs) {
+    bool isSuccess =
+        RoboyMotor::connect(
+            std::ref(kacanMasters.at(muscle.second.network.getNetworkName())),
+            muscle.second)
+            .match(
+                [&motorsCan](RoboyMotor &rbm) -> bool {
+                  std::string motorName = rbm.getName();
+                  motorsCan.emplace(motorName, std::move(rbm));
+                  return true;
+                },
+                [uninitialisedMotors](unintMotor uim) -> bool {
+                  return false;
+                });
+    if (!isSuccess) {
+      return failedCanRoboy{std::make_pair(std::move(roboyConfigs),
+                                           RoboyCanStatus::CONNECTION_FAILED)};
+    }
+  }
+  return canRoboy{kacanMasters, std::move(motorsCan)};
+
   // if (configureNodes(masters, roboyConfigs.configs)) {
   //   return canRoboy(masters, std::move(roboyConfigs.configs));
   // } else {
@@ -30,9 +55,10 @@ auto canRoboy::connect(masterMap kacanMasters, RoboyConfig &&roboyConfigs)
   // }
 }
 
-canRoboy::canRoboy(masterMap canMasters, MotorConfigs &&motorConfigs) {
+canRoboy::canRoboy(masterMap canMasters, motorMap &&motors) {
   std::cout << "Configuring Nodes" << std::endl;
   master_ = canMasters;
+  motorsCan_ = std::move(motors);
 }
 // canRoboy::initialise(std::string busname, std::string baudrate)
 //     ->variant<kaco::Master, RoboyCanStatus> {
