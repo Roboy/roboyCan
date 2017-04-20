@@ -248,29 +248,56 @@ auto RoboyMotor::setupMotor(std::reference_wrapper<kaco::Master> master,
 //   }
 // }
 //
-// RoboyMotorCommandStatus setParameters(Epos2ControlMode &&controlMode,
-//                                       &&MotorConfig config) {
-//   switch (controlMode) {
-//   case Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY:
-//     MaxonParameters parameters =
-//     config.getConfigurationProfilePositionMode();
-//   default:
-//     return RoboyMotorCommandStatus::CONTROL_MODE_UNKNOWN;
-//   }
-//   for (auto &param : parameters) {
-//     try {
-//       motor_.set_entry(param.first, param.second);
-//
-//     } catch (const kaco::dictionary_error &e) {
-//       std::cout << "RoboyCan Error - Dictionary Error on setParameters: "
-//                 << e.what() << std::endl;
-//       return RoboyMotorCommandStatus::EDS_ERROR;
-//     } catch (const kaco::sdo_error &e) {
-//       std::cout << "RoboyCan Error - SDO Error on setParameters: " <<
-//       e.what()
-//                 << std::endl;
-//       return RoboyMotorCommandStatus::SDO_ERROR;
-//     }
-//   }
-//   return RoboyMotorCommandStatus::OK;
-// }
+
+RoboyMotorCommandStatus
+RoboyMotor::setControlMode(Epos2ControlMode &&controlMode) {
+  switch (controlMode) {
+  case Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY:
+    return config_.controllers.at("Profile Position Mode")
+        .match(
+            [this](ProfilePositionModeConfig ppmc) -> RoboyMotorCommandStatus {
+              RoboyMotorCommandStatus status =
+                  writeParameterList(motor_, ppmc.getParameterList());
+              if (status == RoboyMotorCommandStatus::OK) {
+                activeController_ =
+                    Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY;
+                return status;
+              } else {
+                return status;
+              }
+            });
+  default:
+    return RoboyMotorCommandStatus::CONTROL_MODE_UNKNOWN;
+  }
+}
+
+RoboyMotorCommandStatus
+RoboyMotor::writeParameterList(std::reference_wrapper<kaco::Device> device,
+                               MaxonParameterList params) {
+  for (auto &param : params) {
+    try {
+      param.second.match(
+          [&param, &device](int16_t in) -> void {
+            device.get().set_entry(param.first, static_cast<int16_t>(in));
+          },
+          [&param, &device](uint16_t in) -> void {
+            device.get().set_entry(param.first, static_cast<uint16_t>(in));
+          },
+          [&param, &device](int32_t in) -> void {
+            device.get().set_entry(param.first, static_cast<int32_t>(in));
+          },
+          [&param, &device](uint32_t in) -> void {
+            device.get().set_entry(param.first, static_cast<uint32_t>(in));
+          });
+    } catch (const kaco::dictionary_error &e) {
+      std::cout << "RoboyCan Error - Dictionary Error on setParameters: "
+                << e.what() << std::endl;
+      return RoboyMotorCommandStatus::EDS_ERROR;
+    } catch (const kaco::sdo_error &e) {
+      std::cout << "RoboyCan Error - SDO Error on setParameters: " << e.what()
+                << std::endl;
+      return RoboyMotorCommandStatus::SDO_ERROR;
+    }
+  }
+  return RoboyMotorCommandStatus::OK;
+}

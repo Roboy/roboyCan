@@ -60,16 +60,19 @@ canRoboy::canRoboy(masterMap canMasters, motorMap &&motors) {
   master_ = canMasters;
   motorsCan_ = std::move(motors);
 }
-// canRoboy::initialise(std::string busname, std::string baudrate)
-//     ->variant<kaco::Master, RoboyCanStatus> {
-//   if () {
-//     return master_;
-//   } else {
-//     std::cout << "Could not start CAN master" << std::endl;
-//     return RoboyCanStatus::OTHER_ERROR;
-//   }
-// }
 
+auto canRoboy::initialiseMotors(void) -> RoboyMotorCommandStatus {
+  for (auto &motor : motorsCan_) {
+    switch (motor.second.setControlMode(
+        Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY)) {
+    case RoboyMotorCommandStatus::OK:
+      return RoboyMotorCommandStatus::OK;
+      break;
+    default:
+      return RoboyMotorCommandStatus::MOTOR_CONFIGURATION_FAILED;
+    };
+  }
+}
 // // todo: remove this
 // bool canRoboy::set_controllers(roboy_can::setEPOSControllers::Request &req,
 //                                roboy_can::setEPOSControllers::Response &res)

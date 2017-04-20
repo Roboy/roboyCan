@@ -75,6 +75,8 @@ private:
 class RoboyMotor {
 public:
   inline std::string getName() { return config_.name; };
+  RoboyMotorCommandStatus setControlMode(Epos2ControlMode &&controlMode);
+
   RoboyMotorCommandStatus moveMotor(Epos2ControlMode &&controlMode,
                                     double &&setpoint);
   inline double getPosition(void) {
@@ -104,7 +106,9 @@ private:
   writeMotorModeProfilePositionAbsoluteImmediately(double &&setpoint,
                                                    CachedWrite &&useCache);
   RoboyMotorCommandStatus enableDevice(CachedWrite &&useCache);
-  RoboyMotorCommandStatus setParameters(Epos2ControlMode &&controlMode);
+  RoboyMotorCommandStatus
+  writeParameterList(std::reference_wrapper<kaco::Device> device,
+                     MaxonParameterList params);
 
   Epos2ControlMode activeController_;
   std::reference_wrapper<kaco::Device> motor_;

@@ -28,6 +28,7 @@ public:
 
   static auto connect(masterMap masters, RoboyConfig &&roboyConfigs)
       -> variant<canRoboy, failedCanRoboy>;
+  auto initialiseMotors(void) -> RoboyMotorCommandStatus;
 
 private:
   canRoboy(masterMap canMasters, motorMap &&motors);
