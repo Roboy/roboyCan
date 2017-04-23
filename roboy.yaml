@@ -4,11 +4,11 @@ Maxon: #User Configurable Name
       Left: #User Configurable ID
         Driver: usbtin
         Baudrate: 1M #
-        USB Serial: A1B2C3
+        USB Serial: slcan0
       Right: #User Configurable ID
         Driver: usbtin
         Baudrate: 1M
-        USB Serial: D4E5F6
+        USB Serial: slcan1
 
   Standard Motor Configuration: # Fixed Tag
     Sensor Configuration:

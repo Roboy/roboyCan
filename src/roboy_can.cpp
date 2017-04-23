@@ -7,11 +7,10 @@ auto canRoboy::connect(masterMap kacanMasters, RoboyConfig &&roboyConfigs)
   // start the masters
   for (auto &master : roboyConfigs.getNetworks()) {
     try {
-      if (!kacanMasters.at(master).get().start(
-              "slcan0",
-              "1M")) { // todo: take can info from
-        // configuration different can
-        // networks
+      if (!kacanMasters.at(master.first)
+               .get()
+               .start(master.second.getUsbSerial(),
+                      "1M")) { // TODO: Get Baudrate from yaml
         return failedCanRoboy{std::make_pair(
             std::move(roboyConfigs), RoboyCanStatus::CONNECTION_FAILED)};
       }

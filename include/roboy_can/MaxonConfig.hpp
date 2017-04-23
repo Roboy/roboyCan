@@ -174,11 +174,12 @@ class RoboyConfig {
 public:
   RoboyConfig() = default;
   MotorConfigs configs;
-  inline auto getNetworks(void) -> std::set<std::string> {
-    std::set<std::string> networkSet;
+  inline auto getNetworks(void) -> std::map<std::string, NetworkConfig> {
+    std::map<std::string, NetworkConfig> networkMap;
     for (auto &motor : configs) {
-      networkSet.emplace(motor.second.network.getNetworkName());
+      networkMap.emplace(motor.second.network.getNetworkName(),
+                         motor.second.network);
     }
-    return networkSet;
+    return networkMap;
   };
 };
