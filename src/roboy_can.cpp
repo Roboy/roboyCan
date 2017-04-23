@@ -64,7 +64,7 @@ canRoboy::canRoboy(masterMap canMasters, motorMap &&motors) {
 auto canRoboy::initialiseMotors(void) -> RoboyMotorCommandStatus {
   for (auto &motor : motorsCan_) {
     switch (motor.second.setControlMode(
-        Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY)) {
+        std::move(Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY))) {
     case RoboyMotorCommandStatus::OK:
       return RoboyMotorCommandStatus::OK;
       break;

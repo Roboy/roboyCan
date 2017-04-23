@@ -53,6 +53,7 @@ auto RoboyMotor::setupMotor(std::reference_wrapper<kaco::Master> master,
     // motor.get()
     //     .setControlMode(Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY)
     //     .match();
+
     return motor;
   } catch (const kaco::dictionary_error &dict_error) {
     std::cout << "RoboyCan Error - Dictionary Error on EDS loading: "
@@ -62,128 +63,128 @@ auto RoboyMotor::setupMotor(std::reference_wrapper<kaco::Master> master,
   } catch (const kaco::sdo_error &sdo_err) {
     std::cout << "RoboyCan Error - SDO Error on EDS loading: " << sdo_err.what()
               << std::endl;
-    return std::make_pair(RoboyMotorCommandStatus::SDO_ERROR,
-                          std::move(config));
+    return std::make_pair(RoboyMotorCommandStatus::SDO_ERROR, config);
   }
 }
 
-// RoboyMotorCommandStatus RoboyMotor::moveMotor(Epos2ControlMode &controlMode,
-//                                               double &&setpoint) {
-//   switch (controlMode) {
-//   case nullptr:
-//     return RoboyMotorCommandStatus::CONTROL_MODE_NOT_CONFIGURED;
-//   case Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY:
-//     return
-//     writeMotorModeProfilePositionAbsoluteImmediately(std::move(setpoint),
-//                                                             CachedWrite::NO);
-//     break;
-//   default:
-//     return RoboyMotorCommandStatus::CONTROL_MODE_UNKNOWN;
-//   }
-// }
-//
-// RoboyMotorCommandStatus
-// RoboyMotor::writeMotorModeProfilePositionAbsoluteImmediately(
-//     double &&setpoint, CachedWrite &&useCache)
-//     : useCache(CachedWrite::NO) {
-//   // todo: turn setpoint into encoder ticks
-//
-//   if (activeController_ !=
-//       Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY) {
-//
-//     if (setParameters(
-//             Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY) !=
-//         RoboyMotorCommandStatus::OK)
-//       return RoboyMotorCommandStatus::MOTOR_CONFIGURATION_FAILED;
-//
-//     if (enableDevice() != RoboyMotorCommandStatus::OK)
-//       return RoboyMotorCommandStatus::MOTOR_CONFIGURATION_FAILED;
-//
-//     activeController_ = controlMode;
-//   }
-//   try {
-//     if (useCache == CachedWrite::NO) {
-//       std::bitset<16> sw = motor_.get_entry("statusword");
-//       if (sw.check(3) == true)
-//         return RoboyMotorCommandStatus::DEVICE_FAULT;
-//       motor_.set_entry("Target position", (int32_t)setpoint);
-//       std::bitset<16> cw = motor_.get_entry("controlword");
-//       cw.set(4);    // Declare new setpoint
-//       cw.set(5);    // Change set immediately
-//       cw.reset(6);  // Absolute value
-//       cw.reset(8);  // Don't halt
-//       cw.reset(15); // Normal operation, no endless motion
-//       motor_.set_entry("controlword", static_cast<uint16_t>(cw));
-//     } else if (useCache == CachedWrite::YES) {
-//       std::bitset<16> sw =
-//           motor_.get_entry("statusword", kaco::ReadAccessMethod::cache);
-//       if (sw.check(3) == true)
-//         return RoboyMotorCommandStatus::DEVICE_FAULT;
-//       motor_.set_entry("Target position", (int32_t)setpoint,
-//                        kaco::WriteAccessMethod::cache);
-//       std::bitset<16> cw =
-//           motor_.get_entry("controlword", kaco::ReadAccessMethod::cache);
-//       cw.set(4);    // Declare new setpoint
-//       cw.set(5);    // Change set immediately
-//       cw.reset(6);  // Absolute value
-//       cw.reset(8);  // Don't halt
-//       cw.reset(15); // Normal operation, no endless motion
-//       motor_.set_entry("controlword", static_cast<uint16_t>(cw),
-//                        kaco::WriteAccessMethod::cache);
-//     }
-//   } catch (const kaco::dictionary_error &e) {
-//     std::cout << "RoboyCan Error - Dictionary Error on enabling Device: "
-//               << e.what() << std::endl;
-//     return < RoboyMotorCommandStatus::EDS_ERROR;
-//   } catch (const kaco::sdo_error &e) {
-//     std::cout << "RoboyCan Error - SDO Error on enabling Devicey: " <<
-//     e.what()
-//               << std::endl;
-//     return RoboyMotorCommandStatus::SDO_ERROR;
-//   }
-//   return RoboyMotorCommandStatus::OK;
-// }
+RoboyMotorCommandStatus RoboyMotor::moveMotor(Epos2ControlMode &controlMode,
+                                              double &&setpoint) {
+  switch (controlMode) {
+  case Epos2ControlMode::NOINIT:
+    return RoboyMotorCommandStatus::CONTROL_MODE_NOT_CONFIGURED;
+  case Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY:
+    return writeMotorModeProfilePositionAbsoluteImmediately(
+        std::move(setpoint), std::move(CachedWrite::NO));
+    break;
+  default:
+    return RoboyMotorCommandStatus::CONTROL_MODE_UNKNOWN;
+  }
+}
 
 RoboyMotorCommandStatus
-RoboyMotor::enableDevice(std::reference_wrapper<kaco::Device> motor,
-                         CachedWrite &&useCache = CachedWrite::NO) {
+RoboyMotor::writeMotorModeProfilePositionAbsoluteImmediately(
+    double &&setpoint, CachedWrite &&useCache) {
+  // TODO: turn setpoint into encoder ticks
+
+  if (activeController_ !=
+      Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY) {
+
+    if (setControlMode(std::move(
+            Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY)) !=
+        RoboyMotorCommandStatus::OK)
+      return RoboyMotorCommandStatus::MOTOR_CONFIGURATION_FAILED;
+
+    if (enableDevice() != RoboyMotorCommandStatus::OK)
+      return RoboyMotorCommandStatus::MOTOR_CONFIGURATION_FAILED;
+
+    activeController_ = Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY;
+  }
+  try {
+    if (useCache == CachedWrite::NO) {
+      std::bitset<16> sw =
+          static_cast<uint16_t>(motor_.get().get_entry("statusword"));
+      if (sw.test(3) == true)
+        return RoboyMotorCommandStatus::DEVICE_FAULT;
+      motor_.get().set_entry("Target position", (int32_t)setpoint);
+      std::bitset<16> cw =
+          static_cast<uint16_t>(motor_.get().get_entry("controlword"));
+      cw.set(4);    // Declare new setpoint
+      cw.set(5);    // Change set immediately
+      cw.reset(6);  // Absolute value
+      cw.reset(8);  // Don't halt
+      cw.reset(15); // Normal operation, no endless motion
+      motor_.get().set_entry("controlword",
+                             static_cast<uint16_t>(cw.to_ulong()));
+    } else if (useCache == CachedWrite::YES) {
+      std::bitset<16> sw = static_cast<uint16_t>(
+          motor_.get().get_entry("statusword", kaco::ReadAccessMethod::cache));
+      if (sw.test(3) == true)
+        return RoboyMotorCommandStatus::DEVICE_FAULT;
+      motor_.get().set_entry("Target position", (int32_t)setpoint,
+                             kaco::WriteAccessMethod::cache);
+      std::bitset<16> cw = static_cast<uint16_t>(
+          motor_.get().get_entry("controlword", kaco::ReadAccessMethod::cache));
+      cw.set(4);    // Declare new setpoint
+      cw.set(5);    // Change set immediately
+      cw.reset(6);  // Absolute value
+      cw.reset(8);  // Don't halt
+      cw.reset(15); // Normal operation, no endless motion
+      motor_.get().set_entry("controlword",
+                             static_cast<uint16_t>(cw.to_ulong()),
+                             kaco::WriteAccessMethod::cache);
+    }
+  } catch (const kaco::dictionary_error &e) {
+    std::cout << "RoboyCan Error - Dictionary Error on enabling Device: "
+              << e.what() << std::endl;
+    return RoboyMotorCommandStatus::EDS_ERROR;
+  } catch (const kaco::sdo_error &e) {
+    std::cout << "RoboyCan Error - SDO Error on enabling Devicey: " << e.what()
+              << std::endl;
+    return RoboyMotorCommandStatus::SDO_ERROR;
+  }
+  return RoboyMotorCommandStatus::OK;
+}
+
+RoboyMotorCommandStatus RoboyMotor::enableDevice(CachedWrite &&useCache) {
   try {
     if (useCache == CachedWrite::NO) {
       std::bitset<16> cw =
-          static_cast<uint16_t>(motor.get().get_entry("controlword"));
+          static_cast<uint16_t>(motor_.get().get_entry("controlword"));
       // Shutdown the device
       cw.reset(0);
       cw.set(1);
       cw.set(2);
-      motor.get().set_entry("controlword",
-                            static_cast<uint16_t>(cw.to_ulong()));
+      motor_.get().set_entry("controlword",
+                             static_cast<uint16_t>(cw.to_ulong()));
       // Switch the device on
-      cw = static_cast<uint16_t>(motor.get().get_entry("controlword"));
+      cw = static_cast<uint16_t>(motor_.get().get_entry("controlword"));
       cw.set(0);
       cw.set(1);
       cw.set(2);
       cw.set(3);
-      motor.get().set_entry("controlword",
-                            static_cast<uint16_t>(cw.to_ulong()));
+      motor_.get().set_entry("controlword",
+                             static_cast<uint16_t>(cw.to_ulong()));
     } else if (useCache == CachedWrite::YES) {
       std::bitset<16> cw = static_cast<uint16_t>(
-          motor.get().get_entry("controlword", kaco::ReadAccessMethod::cache));
+          motor_.get().get_entry("controlword", kaco::ReadAccessMethod::cache));
       // Shutdown the device
       cw.reset(0);
       cw.set(1);
       cw.set(2);
-      motor.get().set_entry("controlword", static_cast<uint16_t>(cw.to_ulong()),
-                            kaco::WriteAccessMethod::cache);
+      motor_.get().set_entry("controlword",
+                             static_cast<uint16_t>(cw.to_ulong()),
+                             kaco::WriteAccessMethod::cache);
       // Switch the device on
       cw = static_cast<uint16_t>(
-          motor.get().get_entry("controlword", kaco::ReadAccessMethod::cache));
+          motor_.get().get_entry("controlword", kaco::ReadAccessMethod::cache));
 
       cw.set(0);
       cw.set(1);
       cw.set(2);
       cw.set(3);
-      motor.get().set_entry("controlword", static_cast<uint16_t>(cw.to_ulong()),
-                            kaco::WriteAccessMethod::cache);
+      motor_.get().set_entry("controlword",
+                             static_cast<uint16_t>(cw.to_ulong()),
+                             kaco::WriteAccessMethod::cache);
     }
   } catch (const kaco::dictionary_error &e) {
 
@@ -201,22 +202,21 @@ RoboyMotor::enableDevice(std::reference_wrapper<kaco::Device> motor,
 }
 
 RoboyMotorCommandStatus
-RoboyMotor::resetFault(std::reference_wrapper<kaco::Device> motor,
-                       CachedWrite &&useCache = CachedWrite::NO) {
+RoboyMotor::resetFault(CachedWrite &&useCache = CachedWrite::NO) {
   try {
     if (useCache == CachedWrite::NO) {
       std::bitset<16> cw =
-          static_cast<uint16_t>(motor.get().get_entry("controlword"));
-      motor.get().set_entry("controlword",
-                            static_cast<uint16_t>(cw.set(7).to_ulong()));
-      enableDevice(motor, CachedWrite::NO);
+          static_cast<uint16_t>(motor_.get().get_entry("controlword"));
+      motor_.get().set_entry("controlword",
+                             static_cast<uint16_t>(cw.set(7).to_ulong()));
+      enableDevice(CachedWrite::NO);
     } else if (useCache == CachedWrite::YES) {
       std::bitset<16> cw = static_cast<uint16_t>(
-          motor.get().get_entry("controlword", kaco::ReadAccessMethod::cache));
-      motor.get().set_entry("controlword",
-                            static_cast<uint16_t>(cw.set(7).to_ulong()),
-                            kaco::WriteAccessMethod::cache);
-      enableDevice(motor, CachedWrite::YES);
+          motor_.get().get_entry("controlword", kaco::ReadAccessMethod::cache));
+      motor_.get().set_entry("controlword",
+                             static_cast<uint16_t>(cw.set(7).to_ulong()),
+                             kaco::WriteAccessMethod::cache);
+      enableDevice(CachedWrite::YES);
     }
   } catch (const kaco::dictionary_error &e) {
 
