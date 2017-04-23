@@ -105,7 +105,8 @@ RoboyMotor::writeMotorModeProfilePositionAbsoluteImmediately(
           static_cast<uint16_t>(motor_.get().get_entry("statusword"));
       if (sw.test(3) == true)
         return RoboyMotorCommandStatus::DEVICE_FAULT;
-      motor_.get().set_entry("Target position", (int32_t)setpoint);
+      motor_.get().set_entry("Target position",
+                             radToEncoderTics(std::move(setpoint)));
       std::bitset<16> cw =
           static_cast<uint16_t>(motor_.get().get_entry("controlword"));
       cw.set(4);    // Declare new setpoint
@@ -120,7 +121,8 @@ RoboyMotor::writeMotorModeProfilePositionAbsoluteImmediately(
           motor_.get().get_entry("statusword", kaco::ReadAccessMethod::cache));
       if (sw.test(3) == true)
         return RoboyMotorCommandStatus::DEVICE_FAULT;
-      motor_.get().set_entry("Target position", (int32_t)setpoint,
+      motor_.get().set_entry("Target position",
+                             radToEncoderTics(std::move(setpoint)),
                              kaco::WriteAccessMethod::cache);
       std::bitset<16> cw = static_cast<uint16_t>(
           motor_.get().get_entry("controlword", kaco::ReadAccessMethod::cache));
@@ -232,6 +234,26 @@ RoboyMotor::resetFault(CachedWrite &&useCache = CachedWrite::NO) {
   }
   return RoboyMotorCommandStatus::OK;
 }
+
+// /** [readPosition reads the position of all motors ]
+//  *
+//  */
+// auto RoboyMotor::getPosition(void) -> variant<double,
+// RoboyMotorCommandStatus> {
+//   double pos;
+//   try {
+//     pos = motor_.get_entry("Position Actual Value");
+//   } catch (const kaco::dictionary_error &e) {
+//     std::cout << "RoboyCan Error - Dictionary Error on getPosition: "
+//               << e.what() << std::endl;
+//     return RoboyMotorCommandStatus::EDS_ERROR;
+//   } catch (const kaco::sdo_error &e) {
+//     std::cout << "RoboyCan Error - SDO Error on getPosition: " << e.what()
+//               << std::endl;
+//     return RoboyMotorCommandStatus::SDO_ERROR;
+//   }
+//   return std::move(pos);
+// }
 
 auto RoboyMotor::getStatus(void)
     -> variant<std::set<Epos2Status>,

@@ -1,7 +1,10 @@
 #pragma once
+#define _USE_MATH_DEFINES
+
 #include "master.h"
 #include "roboy_can/MaxonConfig.hpp"
 #include "roboy_can/Types.hpp"
+#include <cmath>
 #include <cstdint>
 #include <set>
 
@@ -80,8 +83,9 @@ public:
 
   RoboyMotorCommandStatus moveMotor(Epos2ControlMode &controlMode,
                                     double &&setpoint);
-  inline double getPosition(void) {
-    return motor_.get().get_entry("Position Actual Value");
+  double getPosition(void) {
+
+    return encoderTicsToRad(motor_.get().get_entry("Position Actual Value"));
   }
   inline double getCurrent(void) {
     return motor_.get().get_entry("Current Demand Value");
@@ -111,6 +115,14 @@ private:
   writeParameterList(std::reference_wrapper<kaco::Device> device,
                      MaxonParameterList params);
 
+  inline int32_t radToEncoderTics(double &&radSetpoint) {
+    return (radSetpoint / (2 * M_PI)) * config_.sensor.getPNIE1() *
+           config_.gear.ratio;
+  };
+  inline int32_t encoderTicsToRad(int32_t &&encoderTics) {
+    return (encoderTics / (config_.sensor.getPNIE1() * config_.gear.ratio)) *
+           (2 * M_PI);
+  };
   Epos2ControlMode activeController_{
       Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY};
   std::reference_wrapper<kaco::Device> motor_;

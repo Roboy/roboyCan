@@ -79,6 +79,12 @@ using MotionProfileTypeVariant =
     variant<empty<MotionProfileType>, invalid<MotionProfileType>,
             MotionProfileType>;
 
+struct GearConfig {
+  GearConfig(uint16_t x) : ratio(x){};
+  GearConfig();
+  uint16_t ratio{1};
+};
+
 class SensorConfig {
 public:
   SensorConfig() = default;
@@ -90,6 +96,13 @@ public:
   };
 
   inline MaxonParameterList getParameterList(void) { return parameters_; };
+  inline uint32_t getPNIE1(void) {
+    return getParameter("Pulse Number Incremental Encoder 1")
+        .match([](int16_t) -> uint32_t { return 0; },
+               [](uint16_t) -> uint32_t { return 0; },
+               [](int32_t) -> uint32_t { return 0; },
+               [](uint32_t in) -> uint32_t { return in; });
+  };
 
   inline MaxonParameterVariant getParameter(std::string name) {
     return parameters_.at(name);
@@ -166,6 +179,7 @@ struct MotorConfig {
   NetworkConfig network;
   SensorConfig sensor;
   MaxonControllers controllers;
+  GearConfig gear;
 };
 
 using MotorConfigs = std::map<std::string, MotorConfig>;

@@ -105,6 +105,15 @@ template <> struct convert<MotorConfigVariant> {
                 return invalid<MotorConfigs>{in.reason};
               },
               [&node, &nn](SensorConfig sc) -> MCV { // next level
+                GearConfig gears;
+                if (!node["Standard Motor Configuration"]
+                         ["Gear Configuration"]) {
+                  return invalid<MotorConfigs>{"Missing: Gear Configuration."};
+                } else {
+                  gears =
+                      node["Standard Motor Configuration"]["Gear Configuration"]
+                          .as<uint16_t>();
+                }
                 return node.as<ControllersVariant>().match(
                     [](empty<MaxonControllers>) -> MCV {
                       return invalid<MotorConfigs>{
@@ -113,7 +122,7 @@ template <> struct convert<MotorConfigVariant> {
                     [](invalid<MaxonControllers> in) -> MCV {
                       return invalid<MotorConfigs>{in.reason};
                     },
-                    [&node, &nn, &sc](MaxonControllers mcs) -> MCV {
+                    [&node, &nn, &sc, &gears](MaxonControllers mcs) -> MCV {
                       return node.as<MotorNamesVariant>().match(
                           [](empty<MotorNames>) -> MCV {
                             return invalid<MotorConfigs>{
@@ -123,7 +132,7 @@ template <> struct convert<MotorConfigVariant> {
                             return invalid<MotorConfigs>{
                                 std::string("Motors: " + in.reason)};
                           },
-                          [&nn, &sc, &mcs](MotorNames mn) -> MCV {
+                          [&nn, &sc, &mcs, &gears](MotorNames mn) -> MCV {
                             MotorConfigs motors;
                             for (auto &motor : mn) {
                               if (nn.find(motor.second.network) == nn.end()) {
@@ -136,7 +145,7 @@ template <> struct convert<MotorConfigVariant> {
                                   motor.first,
                                   MotorConfig{motor.first, motor.second.canId,
                                               nn.at(motor.second.network), sc,
-                                              mcs});
+                                              mcs, gears});
                             }
                             return motors;
                           });

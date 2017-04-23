@@ -1,6 +1,7 @@
 #include "roboy_can/motorsParser.hpp"
 #include <gtest/gtest.h>
 #include <iostream>
+
 TEST(parseMotors, motorNames) {
   auto const node = YAML::LoadFile("roboy.yaml");
   MotorNamesVariant mnv = node["Maxon"].as<MotorNamesVariant>();

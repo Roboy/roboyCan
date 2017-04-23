@@ -45,13 +45,6 @@ auto canRoboy::connect(masterMap kacanMasters, RoboyConfig &&roboyConfigs)
     }
   }
   return canRoboy{kacanMasters, std::move(motorsCan)};
-
-  // if (configureNodes(masters, roboyConfigs.configs)) {
-  //   return canRoboy(masters, std::move(roboyConfigs.configs));
-  // } else {
-  //   return failedCanRoboy{std::make_pair(std::move(roboyConfigs),
-  //                                        RoboyCanStatus::CONNECTION_FAILED)};
-  // }
 }
 
 canRoboy::canRoboy(masterMap canMasters, motorMap &&motors) {
@@ -261,29 +254,6 @@ auto canRoboy::initialiseMotors(void) -> RoboyMotorCommandStatus {
 //       }
 //     }
 //   }
-// }
-
-/** [readPosition reads the position of all motors ]
- *
- */
-// std::vector<double> canRoboy::readPosition(void) {
-//   std::vector<std::string> jointNames = getJointNames();
-//   std::vector<double> temp;
-//   int32_t data_temp;
-//   for (std::string motor : jointNames) {
-//     data_temp = deviceVector_.at(getCanAddress(motor))
-//                     .get_entry("Position Actual Value");
-//     temp.push_back((double)data_temp);
-//     std::cout << "Motor current: "
-//               << deviceVector_.at(getCanAddress(motor))
-//                      .get_entry("Current Demand Value")
-//               << std::endl;
-//     std::cout << "Modes of operation: "
-//               << deviceVector_.at(getCanAddress(motor))
-//                      .get_entry("Modes of Operation Display")
-//               << std::endl;
-//   }
-//   return temp;
 // }
 
 /**

@@ -12,6 +12,7 @@
 #include <vector>
 using masterMap = std::map<std::string, std::reference_wrapper<kaco::Master>>;
 using motorMap = std::map<std::string, RoboyMotor>;
+
 enum class RoboyCanStatus {
   OK,
   CONNECTION_FAILED,
@@ -29,6 +30,13 @@ public:
   static auto connect(masterMap masters, RoboyConfig &&roboyConfigs)
       -> variant<canRoboy, failedCanRoboy>;
   auto initialiseMotors(void) -> RoboyMotorCommandStatus;
+  inline auto getPositions(void) -> std::map<std::string, double> {
+    std::map<std::string, double> posMap;
+    for (auto &motor : motorsCan_) {
+      posMap.emplace(motor.first, motor.second.getPosition());
+    }
+    return std::move(posMap);
+  };
 
 private:
   canRoboy(masterMap canMasters, motorMap &&motors);
