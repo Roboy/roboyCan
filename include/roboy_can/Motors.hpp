@@ -34,7 +34,7 @@ enum class RoboyMotorCommandStatus {
 
 enum class CachedWrite { YES, NO };
 
-enum class Epos2Status {
+enum class Epos2Status : std::size_t {
   READY_TO_SWITCH_ON,
   SWITCHED_ON,
   OPERATION_ENABLED,
@@ -85,10 +85,11 @@ public:
   inline double getCurrent(void) {
     return motor_.get().get_entry("Current Demand Value");
   }
-  inline auto getStatus(void)
-      -> variant<std::set<Epos2Status &&>,
-                 std::pair<RoboyMotorCommandStatus, std::set<Epos2Status> &&>>;
-  RoboyMotorCommandStatus resetFault(CachedWrite &&useCache);
+  auto getStatus(void)
+      -> variant<std::set<Epos2Status>,
+                 std::pair<RoboyMotorCommandStatus, std::set<Epos2Status>>>;
+  RoboyMotorCommandStatus resetFault(std::reference_wrapper<kaco::Device> motor,
+                                     CachedWrite &&useCache);
 
   RoboyMotor(RoboyMotor &&) = default;
   RoboyMotor &operator=(RoboyMotor &&) = default;
@@ -102,15 +103,18 @@ private:
   static auto setupMotor(std::reference_wrapper<kaco::Master> master,
                          MotorConfig config) -> CanMotorConfig;
 
+  RoboyMotorCommandStatus writeMotorModeProfilePositionAbsoluteImmediately(
+      std::reference_wrapper<kaco::Device> motor, double &&setpoint,
+      CachedWrite &&useCache);
   RoboyMotorCommandStatus
-  writeMotorModeProfilePositionAbsoluteImmediately(double &&setpoint,
-                                                   CachedWrite &&useCache);
-  RoboyMotorCommandStatus enableDevice(CachedWrite &&useCache);
+  enableDevice(std::reference_wrapper<kaco::Device> motor,
+               CachedWrite &&useCache);
   RoboyMotorCommandStatus
   writeParameterList(std::reference_wrapper<kaco::Device> device,
                      MaxonParameterList params);
 
-  Epos2ControlMode activeController_;
+  Epos2ControlMode activeController_{
+      Epos2ControlMode::PROFILE_POSITION_ABSOLUTE_IMMEDIATELY};
   std::reference_wrapper<kaco::Device> motor_;
   MotorConfig config_;
 };

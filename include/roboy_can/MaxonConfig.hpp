@@ -55,16 +55,16 @@ using MaxonParameterList = std::map<std::string, MaxonParameterVariant>;
 
 enum class KaCanOpenUsbOptions { USBTIN, PEAK };
 
-enum class KaCanOpenBaudrate : unsigned int {
-  Baud10k,
-  Baud20k,
-  Baud50k,
-  Baud100k,
-  Baud125k,
-  Baud250k,
-  Baud500k,
+enum class KaCanOpenBaudrate : uint16_t {
+  Baud1M,
   Baud800k,
-  Baud1M
+  Baud500k,
+  Baud250k,
+  Baud125k,
+  Baud100k,
+  Baud50k,
+  Baud20k,
+  Baud10k
 };
 
 using PositionSensorType =
@@ -148,6 +148,9 @@ public:
   inline KaCanOpenBaudrate getBaudrate(void) { return baudrate_; };
   inline std::string getUsbSerial(void) { return usbSerialNumber_; };
   inline std::string getNetworkName(void) { return yamlTag_; };
+  inline uint16_t getCANBitrate(void) {
+    return static_cast<uint16_t>(baudrate_);
+  };
 
 private:
   KaCanOpenUsbOptions driver_;
