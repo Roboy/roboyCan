@@ -30,6 +30,13 @@ public:
   static auto connect(masterMap masters, RoboyConfig &&roboyConfigs)
       -> variant<canRoboy, failedCanRoboy>;
   auto initialiseMotors(void) -> RoboyMotorCommandStatus;
+  inline auto getMotorNames(void) -> std::vector<std::string> {
+    std::vector<std::string> names;
+    for (auto &name : motorsCan_) {
+      names.emplace_back(name.first);
+    }
+    return std::move(names);
+  };
   inline auto getPositions(void) -> std::map<std::string, double> {
     std::map<std::string, double> posMap;
     for (auto &motor : motorsCan_) {
